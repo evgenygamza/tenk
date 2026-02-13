@@ -38,3 +38,6 @@ Thumbs.db
 # Coverage / reports
 coverage/
 *.lcov
+
+# FVM Version Cache
+.fvm/
