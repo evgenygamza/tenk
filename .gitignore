@@ -1,0 +1,40 @@
+# Flutter / Dart / Pub
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+*.lock
+
+# iOS / Xcode
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Android / Gradle
+android/.gradle/
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+android/**/GeneratedPluginRegistrant.kt
+*.keystore
+*.jks
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage / reports
+coverage/
+*.lcov
