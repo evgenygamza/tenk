@@ -30,7 +30,39 @@ class HomeScreen extends StatelessWidget {
               'All time: ${c.totalMinutesAllTime} min',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            Text(
+              'Timer: ${_formatElapsed(c.elapsedSeconds)}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: c.isRunning ? null : () => c.startTimer(),
+                    child: const Text('Start'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: c.isRunning ? () => c.pauseTimer() : null,
+                    child: const Text('Pause'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => c.stopAndSave(),
+                    child: const Text('Stop'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
 
             SizedBox(
               width: double.infinity,
@@ -76,5 +108,11 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatElapsed(int seconds) {
+    final mm = (seconds ~/ 60).toString().padLeft(2, '0');
+    final ss = (seconds % 60).toString().padLeft(2, '0');
+    return '$mm:$ss';
   }
 }

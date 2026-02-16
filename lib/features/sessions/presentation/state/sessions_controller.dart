@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
@@ -8,12 +10,15 @@ class SessionsController extends ChangeNotifier {
 
   List<SessionEntry> entries = [];
 
+  Timer? _timer;
+  bool isRunning = false;
+  int elapsedSeconds = 0;
+
   SessionsController(this._repo) {
     _load();
   }
 
-  int get totalMinutesAllTime =>
-      entries.fold(0, (sum, e) => sum + e.minutes);
+  int get totalMinutesAllTime => entries.fold(0, (sum, e) => sum + e.minutes);
 
   int get totalMinutesToday {
     final today = _todayKey();
@@ -37,15 +42,71 @@ class SessionsController extends ChangeNotifier {
       note: note,
     );
 
-    entries = [entry, ...entries]; // newest first
+    entries = [entry, ...entries];
     notifyListeners();
 
     await _repo.saveEntries(entries);
   }
 
+  void startTimer() {
+    if (isRunning) return;
+
+    isRunning = true;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      elapsedSeconds += 1;
+      notifyListeners();
+    });
+
+    notifyListeners();
+  }
+
+  void pauseTimer() {
+    if (!isRunning) return;
+
+    isRunning = false;
+    _timer?.cancel();
+    _timer = null;
+
+    notifyListeners();
+  }
+
+  Future<void> stopAndSave({String? note}) async {
+    pauseTimer();
+
+    if (elapsedSeconds <= 0) return;
+
+    var minutes = elapsedSeconds ~/ 60;
+    if (minutes == 0) minutes = 1; // keep very short sessions
+
+    final entry = SessionEntry(
+      id: _newId(),
+      startedAt: DateTime.now(),
+      minutes: minutes,
+      note: note,
+    );
+
+    entries = [entry, ...entries];
+    elapsedSeconds = 0;
+
+    notifyListeners();
+    await _repo.saveEntries(entries);
+  }
+
+  void resetTimer() {
+    pauseTimer();
+    elapsedSeconds = 0;
+    notifyListeners();
+  }
+
   Future<void> resetAll() async {
+    pauseTimer();
+    elapsedSeconds = 0;
+
     entries = [];
     notifyListeners();
+
     await _repo.clear();
   }
 
@@ -58,8 +119,5 @@ class SessionsController extends ChangeNotifier {
     return '$y-$m-$d';
   }
 
-  String _newId() {
-    final now = DateTime.now().microsecondsSinceEpoch;
-    return now.toString();
-  }
+  String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 }
