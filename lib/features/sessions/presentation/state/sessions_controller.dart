@@ -1,71 +1,132 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:tenk/features/sessions/domain/models/session_entry.dart';
+import 'package:tenk/features/sessions/domain/repositories/sessions_repository.dart';
 
 class SessionsController extends ChangeNotifier {
-  static const _kToday = 'sessions_total_minutes_today';
-  static const _kAllTime = 'sessions_total_minutes_all_time';
-  static const _kTodayDate = 'sessions_today_date_yyyy_mm_dd';
+  final SessionsRepository _repo;
 
-  int totalMinutesToday = 0;
-  int totalMinutesAllTime = 0;
+  List<SessionEntry> entries = [];
 
-  SessionsController() {
+  Timer? _timer;
+  bool isRunning = false;
+  int elapsedSeconds = 0;
+
+  SessionsController(this._repo) {
     _load();
   }
 
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
+  int get totalMinutesAllTime => entries.fold(0, (sum, e) => sum + e.minutes);
 
-    totalMinutesAllTime = prefs.getInt(_kAllTime) ?? 0;
-
-    final savedDate = prefs.getString(_kTodayDate);
+  int get totalMinutesToday {
     final today = _todayKey();
+    return entries
+        .where((e) => _dateKey(e.startedAt) == today)
+        .fold(0, (sum, e) => sum + e.minutes);
+  }
 
-    if (savedDate == today) {
-      totalMinutesToday = prefs.getInt(_kToday) ?? 0;
-    } else {
-      totalMinutesToday = 0;
-      await prefs.setInt(_kToday, 0);
-      await prefs.setString(_kTodayDate, today);
-    }
-
+  Future<void> _load() async {
+    entries = await _repo.getEntries();
     notifyListeners();
   }
 
-  Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kToday, totalMinutesToday);
-    await prefs.setInt(_kAllTime, totalMinutesAllTime);
-    await prefs.setString(_kTodayDate, _todayKey());
-  }
-
-  void addManual(int minutes) {
+  Future<void> addManual(int minutes, {String? note}) async {
     if (minutes <= 0) return;
 
-    totalMinutesToday += minutes;
-    totalMinutesAllTime += minutes;
+    final entry = SessionEntry(
+      id: _newId(),
+      startedAt: DateTime.now(),
+      minutes: minutes,
+      note: note,
+    );
+
+    entries = [entry, ...entries];
+    notifyListeners();
+
+    await _repo.saveEntries(entries);
+  }
+
+  void startTimer() {
+    if (isRunning) return;
+
+    isRunning = true;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      elapsedSeconds += 1;
+      notifyListeners();
+    });
 
     notifyListeners();
-    _save();
+  }
+
+  void pauseTimer() {
+    if (!isRunning) return;
+
+    isRunning = false;
+    _timer?.cancel();
+    _timer = null;
+
+    notifyListeners();
+  }
+
+  Future<void> stopAndSave({
+    String? note,
+    DateTime? startedAt,
+    DateTime? finishedAt,
+  }) async {
+    // Stop ticking immediately (if it was running)
+    pauseTimer();
+
+    final end = finishedAt ?? DateTime.now();
+    final start = startedAt ?? end.subtract(Duration(seconds: elapsedSeconds));
+
+    final diffSeconds = end.difference(start).inSeconds;
+    if (diffSeconds <= 0) return;
+
+    final minutes = max(1, diffSeconds ~/ 60);
+
+    final entry = SessionEntry(
+      id: _newId(),
+      startedAt: start,
+      minutes: minutes,
+      note: note,
+    );
+
+    entries = [entry, ...entries];
+    elapsedSeconds = 0;
+
+    notifyListeners();
+    await _repo.saveEntries(entries);
+  }
+
+  void resetTimer() {
+    pauseTimer();
+    elapsedSeconds = 0;
+    notifyListeners();
   }
 
   Future<void> resetAll() async {
-    totalMinutesToday = 0;
-    totalMinutesAllTime = 0;
+    pauseTimer();
+    elapsedSeconds = 0;
 
+    entries = [];
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kToday, 0);
-    await prefs.setInt(_kAllTime, 0);
-    await prefs.setString(_kTodayDate, _todayKey());
+    await _repo.clear();
   }
 
-  String _todayKey() {
-    final now = DateTime.now();
-    final y = now.year.toString().padLeft(4, '0');
-    final m = now.month.toString().padLeft(2, '0');
-    final d = now.day.toString().padLeft(2, '0');
+  String _todayKey() => _dateKey(DateTime.now());
+
+  String _dateKey(DateTime dt) {
+    final y = dt.year.toString().padLeft(4, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
+
+  String _newId() => DateTime.now().microsecondsSinceEpoch.toString();
 }
