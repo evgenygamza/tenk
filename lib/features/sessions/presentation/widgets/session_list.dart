@@ -18,7 +18,7 @@ class SessionList extends StatelessWidget {
 
     return ListView.separated(
       itemCount: entries.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final e = entries[index];
         final subtitle = e.note == null || e.note!.trim().isEmpty
