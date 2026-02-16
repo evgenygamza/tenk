@@ -44,9 +44,7 @@ class _AddManualScreenState extends State<AddManualScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add manually'),
-      ),
+      appBar: AppBar(title: const Text('Add manually')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -77,10 +75,7 @@ class _AddManualScreenState extends State<AddManualScreen> {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: _save,
-                child: const Text('Save'),
-              ),
+              child: FilledButton(onPressed: _save, child: const Text('Save')),
             ),
           ],
         ),
