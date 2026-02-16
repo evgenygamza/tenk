@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
@@ -72,17 +73,25 @@ class SessionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> stopAndSave({String? note}) async {
+  Future<void> stopAndSave({
+    String? note,
+    DateTime? startedAt,
+    DateTime? finishedAt,
+  }) async {
+    // Stop ticking immediately (if it was running)
     pauseTimer();
 
-    if (elapsedSeconds <= 0) return;
+    final end = finishedAt ?? DateTime.now();
+    final start = startedAt ?? end.subtract(Duration(seconds: elapsedSeconds));
 
-    var minutes = elapsedSeconds ~/ 60;
-    if (minutes == 0) minutes = 1; // keep very short sessions
+    final diffSeconds = end.difference(start).inSeconds;
+    if (diffSeconds <= 0) return;
+
+    final minutes = max(1, diffSeconds ~/ 60);
 
     final entry = SessionEntry(
       id: _newId(),
-      startedAt: DateTime.now(),
+      startedAt: start,
       minutes: minutes,
       note: note,
     );
