@@ -153,7 +153,9 @@ class HomeScreen extends StatelessWidget {
             var start = combineToday(startT);
             var end = combineToday(endT);
 
-            if (!end.isAfter(start)) {
+            if (end.isAtSameMomentAs(start)) {
+              end = end.add(const Duration(minutes: 1));
+            } else if (end.isBefore(start)) {
               end = end.add(const Duration(days: 1));
             }
 
