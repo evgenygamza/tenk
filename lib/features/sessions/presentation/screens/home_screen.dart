@@ -105,7 +105,16 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             Expanded(
-              child: SessionList(entries: c.entries),
+              child: SessionList(
+                entries: c.entries,
+                onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
+                onEdit: (entry) {
+                  // todo MVP stub: later we’ll open an edit screen/dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edit: coming soon')),
+                  );
+                },
+              ),
             ),
           ],
         ),

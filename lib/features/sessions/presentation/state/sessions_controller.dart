@@ -49,6 +49,12 @@ class SessionsController extends ChangeNotifier {
     await _repo.saveEntries(entries);
   }
 
+  Future<void> deleteEntry(String id) async {
+    entries = entries.where((e) => e.id != id).toList();
+    notifyListeners();
+    await _repo.saveEntries(entries);
+  }
+
   void startTimer() {
     if (isRunning) return;
 
