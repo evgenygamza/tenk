@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -36,7 +37,7 @@ class HomeScreen extends StatelessWidget {
               child: FilledButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (_) => const AddManualScreen(),
                     ),
                   );
@@ -65,6 +66,11 @@ class HomeScreen extends StatelessWidget {
                 },
                 child: const Text('Reset'),
               ),
+            ),
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: SessionList(entries: c.entries),
             ),
           ],
         ),

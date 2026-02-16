@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../state/sessions_controller.dart';
+import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 
 class AddManualScreen extends StatefulWidget {
   const AddManualScreen({super.key});
@@ -12,15 +12,17 @@ class AddManualScreen extends StatefulWidget {
 
 class _AddManualScreenState extends State<AddManualScreen> {
   final _minutesController = TextEditingController();
+  final _noteController = TextEditingController();
   String? _errorText;
 
   @override
   void dispose() {
     _minutesController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     final raw = _minutesController.text.trim();
     final minutes = int.tryParse(raw);
 
@@ -29,7 +31,13 @@ class _AddManualScreenState extends State<AddManualScreen> {
       return;
     }
 
-    context.read<SessionsController>().addManual(minutes);
+    final note = _noteController.text.trim();
+    await context.read<SessionsController>().addManual(
+      minutes,
+      note: note.isEmpty ? null : note,
+    );
+
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -54,6 +62,16 @@ class _AddManualScreenState extends State<AddManualScreen> {
               onChanged: (_) {
                 if (_errorText != null) setState(() => _errorText = null);
               },
+              onSubmitted: (_) => _save(),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _noteController,
+              textInputAction: TextInputAction.done,
+              decoration: const InputDecoration(
+                labelText: 'Note (optional)',
+                hintText: 'e.g. scales, chord changes, left hand...',
+              ),
               onSubmitted: (_) => _save(),
             ),
             const SizedBox(height: 16),
