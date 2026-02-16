@@ -1,4 +1,4 @@
-import '../models/session_entry.dart';
+import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 abstract class SessionsRepository {
   Future<List<SessionEntry>> getEntries();

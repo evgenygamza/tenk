@@ -1,8 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../domain/models/session_entry.dart';
+import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 class SessionsLocalDataSource {
   static const _kEntries = 'sessions_entries_json';

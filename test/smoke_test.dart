@@ -15,10 +15,16 @@ void main() {
       await tester.pumpAndSettle();
 
       FlutterError.onError = oldOnError;
-      expect(captured, isNull, reason: 'App should build without Flutter errors');
+      expect(
+        captured,
+        isNull,
+        reason: 'App should build without Flutter errors',
+      );
     });
 
-    testWidgets('App contains MaterialApp (or WidgetsApp) root', (tester) async {
+    testWidgets('App contains MaterialApp (or WidgetsApp) root', (
+      tester,
+    ) async {
       await tester.pumpWidget(const App());
       await tester.pump();
 
@@ -38,7 +44,9 @@ void main() {
       expect(find.byType(Navigator), findsWidgets);
     });
 
-    testWidgets('Theme is available (Theme.of(context) != null)', (tester) async {
+    testWidgets('Theme is available (Theme.of(context) != null)', (
+      tester,
+    ) async {
       await tester.pumpWidget(const App());
       await tester.pump();
 
@@ -48,7 +56,9 @@ void main() {
       expect(materialApp, isNotNull);
     });
 
-    testWidgets('Rebuild does not change the tree unexpectedly', (tester) async {
+    testWidgets('Rebuild does not change the tree unexpectedly', (
+      tester,
+    ) async {
       await tester.pumpWidget(const App());
       await tester.pump();
 
@@ -76,13 +86,16 @@ void main() {
 
       final message = captured?.exceptionAsString() ?? '';
       expect(
-        message.contains('A RenderFlex overflowed') || message.contains('overflowed by'),
+        message.contains('A RenderFlex overflowed') ||
+            message.contains('overflowed by'),
         isFalse,
         reason: 'Initial screen should not overflow',
       );
     });
 
-    testWidgets('Tapping anywhere does not crash (basic gesture smoke)', (tester) async {
+    testWidgets('Tapping anywhere does not crash (basic gesture smoke)', (
+      tester,
+    ) async {
       await tester.pumpWidget(const App());
       await tester.pump();
 
