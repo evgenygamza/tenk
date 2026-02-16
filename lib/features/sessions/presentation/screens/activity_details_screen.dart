@@ -9,8 +9,8 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class ActivityDetailsScreen extends StatelessWidget {
+  const ActivityDetailsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
