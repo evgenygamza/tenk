@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'activity_details_screen.dart';
+
 const activityPalette = [
   Color(0xFF22C55E), // green
   Color(0xFF06B6D4), // cyan
@@ -7,6 +9,26 @@ const activityPalette = [
   Color(0xFFA855F7), // purple
   Color(0xFFEC4899), // pink
 ];
+
+const stubActivities = [
+  ActivityStub(id: 'guitar', title: 'Guitar', progress: 0.62, colorIndex: 3),
+  ActivityStub(id: 'running', title: 'Running', progress: 0.35, colorIndex: 1),
+  ActivityStub(id: 'sql', title: 'SQL', progress: 0.82, colorIndex: 2),
+];
+
+class ActivityStub {
+  final String id;
+  final String title;
+  final double progress;
+  final int colorIndex;
+
+  const ActivityStub({
+    required this.id,
+    required this.title,
+    required this.progress,
+    required this.colorIndex,
+  });
+}
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -30,29 +52,50 @@ class DashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: GridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.92,
-            children: [
-              _ActivityCardStub(
-                title: 'Guitar',
-                progress: 0.62,
-                progressColor: activityPalette[3], // purple
-              ),
-              _ActivityCardStub(
-                title: 'Running',
-                progress: 0.35,
-                progressColor: activityPalette[1], // cyan
-              ),
-              _ActivityCardStub(
-                title: 'SQL',
-                progress: 0.82,
-                progressColor: activityPalette[2], // orange
-              ),
-              const _AddActivityCardStub(),
-            ],
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.92,
+            ),
+            itemCount: stubActivities.length + 1, // + Add card
+            itemBuilder: (context, index) {
+              if (index == stubActivities.length) {
+                return const _AddActivityCardStub();
+              }
+
+              final a = stubActivities[index];
+              return _ActivityCardStub(
+                title: a.title,
+                progress: a.progress,
+                progressColor: activityPalette[a.colorIndex % activityPalette.length],
+
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ActivityDetailsScreen(
+                        activityTitle: a.title,
+                        activityId: a.id,
+                        autoStart: false,
+                      ),
+                    ),
+                  );
+                },
+
+                onStart: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ActivityDetailsScreen(
+                        activityTitle: a.title,
+                        activityId: a.id,
+                        autoStart: true,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ),
@@ -85,26 +128,27 @@ class _ActivityCardStub extends StatelessWidget {
   final String title;
   final double progress;
   final Color? progressColor;
+  final VoidCallback? onTap;
+  final VoidCallback? onStart;
 
   const _ActivityCardStub({
     required this.title,
     this.progress = 0.25,
     this.progressColor,
+    this.onTap,
+    this.onStart,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-
     final color = progressColor ?? scheme.primary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          debugPrint('Open $title');
-        },
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -114,8 +158,6 @@ class _ActivityCardStub extends StatelessWidget {
               const SizedBox(height: 10),
               Text('Today: 0m', style: theme.textTheme.bodyMedium),
               const SizedBox(height: 10),
-
-              // Progress (цветной)
               LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 color: color,
@@ -123,12 +165,11 @@ class _ActivityCardStub extends StatelessWidget {
                 minHeight: 8,
                 borderRadius: const BorderRadius.all(Radius.circular(999)),
               ),
-
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => debugPrint('Start $title'),
+                  onPressed: onStart,
                   child: const Text('Start'),
                 ),
               ),

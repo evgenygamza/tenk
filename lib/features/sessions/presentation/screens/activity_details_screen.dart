@@ -9,118 +9,152 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 
-class ActivityDetailsScreen extends StatelessWidget {
-  const ActivityDetailsScreen({super.key});
+
+class ActivityDetailsScreen extends StatefulWidget {
+  final String activityTitle;
+  final String activityId;
+  final bool autoStart;
+
+  const ActivityDetailsScreen({
+    super.key,
+    required this.activityTitle,
+    required this.activityId,
+    this.autoStart = false,
+  });
+
+  @override
+  State<ActivityDetailsScreen> createState() => _ActivityDetailsScreenState();
+}
+
+class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
+  bool _didAutoStart = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final c = context.read<SessionsController>();
+
+        if (!_didAutoStart && !c.isRunning && c.elapsedSeconds == 0) {
+          _didAutoStart = true;
+          c.startTimer();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('TenK')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Today: ${_formatHoursMinutes(c.totalMinutesToday)}',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'All time: ${_formatHoursMinutes(c.totalMinutesAllTime)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
+        appBar: AppBar(title: Text(widget.activityTitle)),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Today: ${_formatHoursMinutes(c.totalMinutesToday)}',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'All time: ${_formatHoursMinutes(c.totalMinutesAllTime)}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 16),
 
-            ProgressBar(totalMinutesAllTime: c.totalMinutesAllTime),
-            const SizedBox(height: 16),
+              ProgressBar(totalMinutesAllTime: c.totalMinutesAllTime),
+              const SizedBox(height: 16),
 
-            Text(
-              'Timer: ${_formatElapsed(c.elapsedSeconds)}',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: c.isRunning ? null : () => c.startTimer(),
-                    child: const Text('Start'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: c.isRunning ? () => c.pauseTimer() : null,
-                    child: const Text('Pause'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: c.elapsedSeconds == 0
-                        ? null
-                        : () async {
-                      context.read<SessionsController>().pauseTimer();
-                      await _openStopDialog(context);
-                    },
-                    child: const Text('Stop'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AddManualScreen(),
+              Text(
+                'Timer: ${_formatElapsed(c.elapsedSeconds)}',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: c.isRunning ? null : () => c.startTimer(),
+                      child: const Text('Start'),
                     ),
-                  );
-                },
-                child: const Text('Add manually'),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: c.isRunning ? () => c.pauseTimer() : null,
+                      child: const Text('Pause'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: c.elapsedSeconds == 0
+                          ? null
+                          : () async {
+                        context.read<SessionsController>().pauseTimer();
+                        await _openStopDialog(context);
+                      },
+                      child: const Text('Stop'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  context.read<SessionsController>().addManual(15);
-                },
-                child: const Text('+15 min'),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AddManualScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Add manually'),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  context.read<SessionsController>().resetAll();
-                },
-                child: const Text('Reset'),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    context.read<SessionsController>().addManual(15);
+                  },
+                  child: const Text('+15 min'),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-            Expanded(
-              child: SessionList(
-                entries: c.entries,
-                onDelete: (id) =>
-                    context.read<SessionsController>().deleteEntry(id),
-                onEdit: (entry) => _openEditDialog(context, entry),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    context.read<SessionsController>().resetAll();
+                  },
+                  child: const Text('Reset'),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+
+              Expanded(
+                child: SessionList(
+                  entries: c.entries,
+                  onDelete: (id) =>
+                      context.read<SessionsController>().deleteEntry(id),
+                  onEdit: (entry) => _openEditDialog(context, entry),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
     );
   }
 
