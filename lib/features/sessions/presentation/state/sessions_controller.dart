@@ -19,11 +19,25 @@ class SessionsController extends ChangeNotifier {
     _load();
   }
 
-  int get totalMinutesAllTime => entries.fold(0, (sum, e) => sum + e.minutes);
+  // int get totalMinutesAllTime => entries.fold(0, (sum, e) => sum + e.minutes);
+  //
+  // int get totalMinutesToday {
+  //   final today = _todayKey();
+  //   return entries
+  //       .where((e) => _dateKey(e.startedAt) == today)
+  //       .fold(0, (sum, e) => sum + e.minutes);
+  // }
 
-  int get totalMinutesToday {
+  int totalMinutesAllTime(String activityId) {
+    return entries
+        .where((e) => e.activityId == activityId)
+        .fold(0, (sum, e) => sum + e.minutes);
+  }
+
+  int totalMinutesToday(String activityId) {
     final today = _todayKey();
     return entries
+        .where((e) => e.activityId == activityId)
         .where((e) => _dateKey(e.startedAt) == today)
         .fold(0, (sum, e) => sum + e.minutes);
   }
@@ -33,11 +47,16 @@ class SessionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addManual(int minutes, {String? note}) async {
+  Future<void> addManual(
+      String activityId,
+      int minutes, {
+        String? note,
+      }) async {
     if (minutes <= 0) return;
 
     final entry = SessionEntry(
       id: _newId(),
+      activityId: activityId,
       startedAt: DateTime.now(),
       minutes: minutes,
       note: note,
@@ -92,6 +111,7 @@ class SessionsController extends ChangeNotifier {
   }
 
   Future<void> stopAndSave({
+    required String activityId,
     String? note,
     DateTime? startedAt,
     DateTime? finishedAt,
@@ -109,6 +129,7 @@ class SessionsController extends ChangeNotifier {
 
     final entry = SessionEntry(
       id: _newId(),
+      activityId: activityId,
       startedAt: start,
       minutes: minutes,
       note: note,
@@ -127,14 +148,14 @@ class SessionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> resetAll() async {
+  Future<void> resetActivity(String activityId) async {
     pauseTimer();
     elapsedSeconds = 0;
 
-    entries = [];
+    entries = entries.where((e) => e.activityId != activityId).toList();
     notifyListeners();
 
-    await _repo.clear();
+    await _repo.saveEntries(entries);
   }
 
   String _todayKey() => _dateKey(DateTime.now());

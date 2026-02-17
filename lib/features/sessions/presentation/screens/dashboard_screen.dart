@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'activity_details_screen.dart';
 
 const activityPalette = [
@@ -35,9 +37,11 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.watch<SessionsController>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Activities'),
+
         actions: [
           IconButton(
             onPressed: () {
@@ -70,10 +74,11 @@ class DashboardScreen extends StatelessWidget {
                 title: a.title,
                 progress: a.progress,
                 progressColor: activityPalette[a.colorIndex % activityPalette.length],
+                todayMinutes: c.totalMinutesToday(a.id),
 
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
                         activityTitle: a.title,
                         activityId: a.id,
@@ -85,7 +90,7 @@ class DashboardScreen extends StatelessWidget {
 
                 onStart: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
                         activityTitle: a.title,
                         activityId: a.id,
@@ -130,6 +135,7 @@ class _ActivityCardStub extends StatelessWidget {
   final Color? progressColor;
   final VoidCallback? onTap;
   final VoidCallback? onStart;
+  final int todayMinutes;
 
   const _ActivityCardStub({
     required this.title,
@@ -137,6 +143,7 @@ class _ActivityCardStub extends StatelessWidget {
     this.progressColor,
     this.onTap,
     this.onStart,
+    this.todayMinutes = 0,
   });
 
   @override
@@ -156,7 +163,7 @@ class _ActivityCardStub extends StatelessWidget {
             children: [
               Text(title, style: theme.textTheme.titleMedium),
               const SizedBox(height: 10),
-              Text('Today: 0m', style: theme.textTheme.bodyMedium),
+              Text('Today: ${todayMinutes}m', style: theme.textTheme.bodyMedium),
               const SizedBox(height: 10),
               LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),

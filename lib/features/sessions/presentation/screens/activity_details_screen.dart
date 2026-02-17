@@ -58,17 +58,17 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Today: ${_formatHoursMinutes(c.totalMinutesToday)}',
+                'Today: ${_formatHoursMinutes(c.totalMinutesToday(widget.activityId))}',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               Text(
-                'All time: ${_formatHoursMinutes(c.totalMinutesAllTime)}',
+                'All time: ${_formatHoursMinutes(c.totalMinutesAllTime(widget.activityId))}',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 16),
 
-              ProgressBar(totalMinutesAllTime: c.totalMinutesAllTime),
+              ProgressBar(totalMinutesAllTime: c.totalMinutesAllTime(widget.activityId)),
               const SizedBox(height: 16),
 
               Text(
@@ -113,7 +113,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const AddManualScreen(),
+                        builder: (_) => AddManualScreen(activityId: widget.activityId),
                       ),
                     );
                   },
@@ -126,7 +126,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    context.read<SessionsController>().addManual(15);
+                    context.read<SessionsController>().addManual(widget.activityId, 15);
                   },
                   child: const Text('+15 min'),
                 ),
@@ -137,7 +137,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    context.read<SessionsController>().resetAll();
+                    context.read<SessionsController>().resetActivity(widget.activityId);
                   },
                   child: const Text('Reset'),
                 ),
@@ -247,6 +247,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       : () async {
                     final note = noteController.text.trim();
                     await c.stopAndSave(
+                      activityId: widget.activityId,
                       note: note.isEmpty ? null : note,
                       startedAt: start,
                       finishedAt: end,
@@ -379,6 +380,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
                     final updated = SessionEntry(
                       id: entry.id,
+                      activityId: entry.activityId,
                       startedAt: start,
                       minutes: max(1, minutes),
                       note: noteCtrl.text.trim().isEmpty
