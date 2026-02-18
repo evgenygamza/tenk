@@ -15,17 +15,13 @@ import 'dashboard_screen.dart';
 enum _ActivityMenuAction { rename, changeColor, delete }
 
 class ActivityDetailsScreen extends StatefulWidget {
-  final String activityTitle;
   final String activityId;
   final bool autoStart;
-  final Color accentColor;
 
   const ActivityDetailsScreen({
     super.key,
-    required this.activityTitle,
     required this.activityId,
     this.autoStart = false,
-    required this.accentColor,
   });
 
   @override
@@ -35,19 +31,19 @@ class ActivityDetailsScreen extends StatefulWidget {
 class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   bool _didAutoStart = false;
 
-  ThemeData _activityTheme(BuildContext context) {
+  ThemeData _activityTheme(BuildContext context, Color accentColor) {
     final base = Theme.of(context);
     final cs = base.colorScheme;
 
     // Keep overall M3 scheme, but set the "primary" to the activity accent.
     final activityScheme = cs.copyWith(
-      primary: widget.accentColor,
+      primary: accentColor,
       // Helps FilledButton when disabled/tonal etc.
       onPrimary: Colors.white,
     );
 
     final filledStyle = FilledButton.styleFrom(
-      backgroundColor: widget.accentColor,
+      backgroundColor: accentColor,
       foregroundColor: Colors.white,
     );
 
@@ -78,30 +74,46 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     }
   }
 
+  Color _accentFromContext(BuildContext context) {
+    final a = context.read<ActivitiesController>();
+    final idx = a.activities.indexWhere((x) => x.id == widget.activityId);
+
+    if (idx == -1) return Theme.of(context).colorScheme.primary;
+
+    return activityPalette[
+    a.activities[idx].colorIndex % activityPalette.length
+    ];
+  }
+
+  String _titleFromContext(BuildContext context) {
+    final a = context.read<ActivitiesController>();
+    final idx = a.activities.indexWhere((x) => x.id == widget.activityId);
+
+    if (idx == -1) return 'Activity';
+    return a.activities[idx].title;
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
-    final themed = _activityTheme(context);
-    final a = context.watch<ActivitiesController>();
-    final idx = a.activities.indexWhere((x) => x.id == widget.activityId);
-    final currentTitle = idx == -1
-        ? widget.activityTitle
-        : a.activities[idx].title;
-
+    context.watch<ActivitiesController>();
+    final title = _titleFromContext(context);
+    final accent = _accentFromContext(context);
+    final themed = _activityTheme(context, accent);
 
     return Theme(
       data: themed,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(currentTitle),
-          backgroundColor: widget.accentColor,
+          title: Text(title),
+          backgroundColor: accent,
           foregroundColor: Colors.white,
           actions: [
             PopupMenuButton<_ActivityMenuAction>(
               onSelected: (a) async {
                 switch (a) {
                   case _ActivityMenuAction.rename:
-                    await _renameActivity(context);
+                    await _renameActivity();
                     break;
                   case _ActivityMenuAction.changeColor:
                     await _changeColor();
@@ -145,7 +157,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               const SizedBox(height: 16),
               ProgressBar(
                 totalMinutesAllTime: c.totalMinutesAllTime(widget.activityId),
-                color: widget.accentColor,
+                color: accent,
               ),
               const SizedBox(height: 16),
               Text(
@@ -187,7 +199,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    final themed = _activityTheme(context);
+                    final themed = _activityTheme(context, accent);
 
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -245,7 +257,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   // ---------- STOP DIALOG (time picker version stays for MVP) ----------
   Future<void> _openStopDialog(BuildContext context) async {
     final c = context.read<SessionsController>();
-    final themed = _activityTheme(context);
+    final accent = _accentFromContext(context);
+    final themed = _activityTheme(context, accent);
 
     final now = DateTime.now();
     final endInit = now;
@@ -312,7 +325,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Duration: ${_formatHoursMinutes(durationMinutes)}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(ctx).textTheme.bodySmall,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -352,7 +365,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     );
   }
 
-  Future<void> _renameActivity(BuildContext context) async {
+  Future<void> _renameActivity() async {
     final activities = context.read<ActivitiesController>();
     final idx = activities.activities.indexWhere(
       (a) => a.id == widget.activityId,
@@ -507,7 +520,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
   // ---------- EDIT DIALOG (plain HH:mm input) ----------
   Future<void> _openEditDialog(BuildContext context, SessionEntry entry) async {
-    final themed = _activityTheme(context);
+    final accent = _accentFromContext(context);
+    final themed = _activityTheme(context, accent);
 
     final baseDate = entry.startedAt;
     final endInitial = entry.startedAt.add(Duration(minutes: entry.minutes));
@@ -569,7 +583,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'Duration: ${_formatHoursMinutes(preview)}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: Theme.of(ctx).textTheme.bodySmall,
                         ),
                       ),
                     ],

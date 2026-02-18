@@ -69,11 +69,9 @@ class DashboardScreen extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
-                        activityTitle: act.title,
                         activityId: act.id,
-                        accentColor: color,
                         autoStart: false,
-                      ),
+                      )
                     ),
                   );
                 },
@@ -81,9 +79,7 @@ class DashboardScreen extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
-                        activityTitle: act.title,
                         activityId: act.id,
-                        accentColor: color,
                         autoStart: true,
                       ),
                     ),
