@@ -1,30 +1,42 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 class SessionsLocalDataSource {
-  static const _kEntries = 'sessions_entries_json';
+  static const _fileName = 'sessions.json';
 
   Future<List<SessionEntry>> loadEntries() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_kEntries);
-    if (raw == null || raw.isEmpty) return [];
+    final file = await _file();
+    if (!await file.exists()) return [];
 
-    final decoded = jsonDecode(raw) as List<dynamic>;
+    final raw = await file.readAsString();
+    if (raw.trim().isEmpty) return [];
+
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) return [];
+
     return decoded
         .map((e) => SessionEntry.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<void> saveEntries(List<SessionEntry> entries) async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(entries.map((e) => e.toJson()).toList());
-    await prefs.setString(_kEntries, encoded);
+    final file = await _file();
+    final data = entries.map((e) => e.toJson()).toList();
+    await file.writeAsString(jsonEncode(data));
   }
 
   Future<void> clear() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_kEntries);
+    final file = await _file();
+    if (await file.exists()) {
+      await file.delete();
+    }
+  }
+
+  Future<File> _file() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/$_fileName');
   }
 }
