@@ -100,6 +100,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     final title = _titleFromContext(context);
     final accent = _accentFromContext(context);
     final themed = _activityTheme(context, accent);
+    final entries = c.entries
+        .where((e) => e.activityId == widget.activityId)
+        .toList();
 
     return Theme(
       data: themed,
@@ -241,9 +244,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               const SizedBox(height: 16),
               Expanded(
                 child: SessionList(
-                  entries: c.entries,
-                  onDelete: (id) =>
-                      context.read<SessionsController>().deleteEntry(id),
+                  entries: entries,
+                  onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
                   onEdit: (entry) => _openEditDialog(context, entry),
                 ),
               ),
