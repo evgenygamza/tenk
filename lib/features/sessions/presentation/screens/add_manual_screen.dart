@@ -4,7 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 
 class AddManualScreen extends StatefulWidget {
-  const AddManualScreen({super.key});
+  final String activityId;
+
+  const AddManualScreen({
+    super.key,
+    required this.activityId,
+  });
 
   @override
   State<AddManualScreen> createState() => _AddManualScreenState();
@@ -33,6 +38,7 @@ class _AddManualScreenState extends State<AddManualScreen> {
 
     final note = _noteController.text.trim();
     await context.read<SessionsController>().addManual(
+      widget.activityId,
       minutes,
       note: note.isEmpty ? null : note,
     );

@@ -9,6 +9,7 @@ void main() {
     final seed = [
       SessionEntry(
         id: '1',
+        activityId: 'guitar',
         startedAt: DateTime(2026, 2, 16, 10, 0),
         minutes: 30,
       ),
@@ -21,7 +22,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 1));
 
     expect(c.entries.length, 1);
-    expect(c.totalMinutesAllTime, 30);
+    expect(c.totalMinutesAllTime('guitar'), 30);
   });
 
   test('addManual adds entry and persists', () async {
@@ -29,14 +30,16 @@ void main() {
     final c = SessionsController(repo);
 
     await Future<void>.delayed(const Duration(milliseconds: 1));
-    await c.addManual(15, note: 'warmup');
+    await c.addManual('guitar', 15, note: 'warmup');
 
     expect(c.entries.length, 1);
+    expect(c.entries.first.activityId, 'guitar');
     expect(c.entries.first.minutes, 15);
     expect(c.entries.first.note, 'warmup');
 
     final stored = repo.store;
     expect(stored.length, 1);
+    expect(stored.first.activityId, 'guitar');
     expect(stored.first.minutes, 15);
   });
 
@@ -44,11 +47,13 @@ void main() {
     final seed = [
       SessionEntry(
         id: 'a',
+        activityId: 'guitar',
         startedAt: DateTime(2026, 2, 16, 10, 0),
         minutes: 10,
       ),
       SessionEntry(
         id: 'b',
+        activityId: 'running',
         startedAt: DateTime(2026, 2, 16, 11, 0),
         minutes: 20,
       ),
@@ -67,6 +72,7 @@ void main() {
     final seed = [
       SessionEntry(
         id: 'a',
+        activityId: 'guitar',
         startedAt: DateTime(2026, 2, 16, 10, 0),
         minutes: 10,
       ),
@@ -78,6 +84,7 @@ void main() {
 
     final updated = SessionEntry(
       id: 'a',
+      activityId: 'guitar',
       startedAt: DateTime(2026, 2, 16, 12, 0),
       minutes: 42,
       note: 'edited',
@@ -100,29 +107,42 @@ void main() {
     final start = DateTime(2026, 2, 16, 10, 0);
     final end = DateTime(2026, 2, 16, 10, 45);
 
-    await c.stopAndSave(startedAt: start, finishedAt: end, note: 'timer');
+    await c.stopAndSave(
+      activityId: 'guitar',
+      startedAt: start,
+      finishedAt: end,
+      note: 'timer',
+    );
 
     expect(c.entries.length, 1);
+    expect(c.entries.first.activityId, 'guitar');
     expect(c.entries.first.startedAt, start);
     expect(c.entries.first.minutes, 45);
     expect(c.entries.first.note, 'timer');
   });
 
-  test('resetAll clears entries and repo', () async {
+  test('resetActivity clears only that activity and persists', () async {
     final seed = [
       SessionEntry(
         id: 'a',
+        activityId: 'climbing',
         startedAt: DateTime(2026, 2, 16, 10, 0),
         minutes: 10,
+      ),
+      SessionEntry(
+        id: 'b',
+        activityId: 'guitar',
+        startedAt: DateTime(2026, 2, 16, 11, 0),
+        minutes: 20,
       ),
     ];
     final repo = FakeSessionsRepository(seed: seed);
     final c = SessionsController(repo);
 
     await Future<void>.delayed(const Duration(milliseconds: 1));
-    await c.resetAll();
+    await c.resetActivity('climbing');
 
-    expect(c.entries, isEmpty);
-    expect(repo.store, isEmpty);
+    expect(c.entries.map((e) => e.id), ['b']);
+    expect(repo.store.map((e) => e.id), ['b']);
   });
 }
