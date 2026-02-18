@@ -5,6 +5,8 @@
 .pub-cache/
 build/
 *.lock
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # iOS / Xcode
 ios/Pods/

@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:tenk/features/sessions/domain/models/session_entry.dart';
+import 'package:tenk/features/activities/domain/models/activity.dart';
 
-class SessionsLocalDataSource {
-  static const _fileName = 'sessions.json';
+class ActivitiesLocalDataSource {
+  static const _fileName = 'activities.json';
 
-  Future<List<SessionEntry>> loadEntries() async {
+  Future<List<Activity>> getActivities() async {
     final file = await _file();
     if (!await file.exists()) return [];
 
@@ -18,13 +18,14 @@ class SessionsLocalDataSource {
     if (decoded is! List) return [];
 
     return decoded
-        .map((e) => SessionEntry.fromJson(e as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .map(Activity.fromJson)
         .toList();
   }
 
-  Future<void> saveEntries(List<SessionEntry> entries) async {
+  Future<void> saveActivities(List<Activity> activities) async {
     final file = await _file();
-    final data = entries.map((e) => e.toJson()).toList();
+    final data = activities.map((a) => a.toJson()).toList();
     await file.writeAsString(jsonEncode(data));
   }
 

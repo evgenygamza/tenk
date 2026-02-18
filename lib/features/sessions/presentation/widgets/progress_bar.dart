@@ -33,10 +33,7 @@ class ProgressBar extends StatelessWidget {
               : Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: progress,
-          color: color,
-        ),
+        LinearProgressIndicator(value: progress, color: color),
         const SizedBox(height: 6),
         Text(
           '${_fmt(from)}h → ${_fmt(to)}h',

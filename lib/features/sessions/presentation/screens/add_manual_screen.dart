@@ -6,10 +6,7 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 class AddManualScreen extends StatefulWidget {
   final String activityId;
 
-  const AddManualScreen({
-    super.key,
-    required this.activityId,
-  });
+  const AddManualScreen({super.key, required this.activityId});
 
   @override
   State<AddManualScreen> createState() => _AddManualScreenState();
