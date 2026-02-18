@@ -8,6 +8,11 @@ import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.da
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
+import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
+
+import 'dashboard_screen.dart';
+
+enum _ActivityMenuAction { rename, changeColor, delete }
 
 class ActivityDetailsScreen extends StatefulWidget {
   final String activityTitle;
@@ -77,14 +82,51 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
     final themed = _activityTheme(context);
+    final a = context.watch<ActivitiesController>();
+    final idx = a.activities.indexWhere((x) => x.id == widget.activityId);
+    final currentTitle = idx == -1
+        ? widget.activityTitle
+        : a.activities[idx].title;
+
 
     return Theme(
       data: themed,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.activityTitle),
+          title: Text(currentTitle),
           backgroundColor: widget.accentColor,
           foregroundColor: Colors.white,
+          actions: [
+            PopupMenuButton<_ActivityMenuAction>(
+              onSelected: (a) async {
+                switch (a) {
+                  case _ActivityMenuAction.rename:
+                    await _renameActivity(context);
+                    break;
+                  case _ActivityMenuAction.changeColor:
+                    await _changeColor();
+                    break;
+                  case _ActivityMenuAction.delete:
+                    await _deleteActivity();
+                    break;
+                }
+              },
+              itemBuilder: (ctx) => const [
+                PopupMenuItem(
+                  value: _ActivityMenuAction.rename,
+                  child: Text('Rename'),
+                ),
+                PopupMenuItem(
+                  value: _ActivityMenuAction.changeColor,
+                  child: Text('Change color'),
+                ),
+                PopupMenuItem(
+                  value: _ActivityMenuAction.delete,
+                  child: Text('Delete'),
+                ),
+              ],
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
@@ -132,9 +174,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       onPressed: c.elapsedSeconds == 0
                           ? null
                           : () async {
-                        context.read<SessionsController>().pauseTimer();
-                        await _openStopDialog(context);
-                      },
+                              context.read<SessionsController>().pauseTimer();
+                              await _openStopDialog(context);
+                            },
                       child: const Text('Stop'),
                     ),
                   ),
@@ -164,7 +206,10 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    context.read<SessionsController>().addManual(widget.activityId, 15);
+                    context.read<SessionsController>().addManual(
+                      widget.activityId,
+                      15,
+                    );
                   },
                   child: const Text('+15 min'),
                 ),
@@ -174,7 +219,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () {
-                    context.read<SessionsController>().resetActivity(widget.activityId);
+                    context.read<SessionsController>().resetActivity(
+                      widget.activityId,
+                    );
                   },
                   child: const Text('Reset'),
                 ),
@@ -183,7 +230,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               Expanded(
                 child: SessionList(
                   entries: c.entries,
-                  onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
+                  onDelete: (id) =>
+                      context.read<SessionsController>().deleteEntry(id),
                   onEdit: (entry) => _openEditDialog(context, entry),
                 ),
               ),
@@ -284,15 +332,15 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     onPressed: invalid
                         ? null
                         : () async {
-                      final note = noteController.text.trim();
-                      await c.stopAndSave(
-                        activityId: widget.activityId,
-                        note: note.isEmpty ? null : note,
-                        startedAt: start,
-                        finishedAt: end,
-                      );
-                      if (ctx.mounted) Navigator.of(ctx).pop();
-                    },
+                            final note = noteController.text.trim();
+                            await c.stopAndSave(
+                              activityId: widget.activityId,
+                              note: note.isEmpty ? null : note,
+                              startedAt: start,
+                              finishedAt: end,
+                            );
+                            if (ctx.mounted) Navigator.of(ctx).pop();
+                          },
                     child: const Text('Save'),
                   ),
                 ],
@@ -302,6 +350,159 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _renameActivity(BuildContext context) async {
+    final activities = context.read<ActivitiesController>();
+    final idx = activities.activities.indexWhere(
+      (a) => a.id == widget.activityId,
+    );
+    if (idx == -1) return;
+
+    final current = activities.activities[idx];
+    final ctrl = TextEditingController(text: current.title);
+
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Rename activity'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(labelText: 'Title'),
+            onSubmitted: (_) => Navigator.of(ctx).pop(ctrl.text.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final t = (newTitle ?? '').trim();
+    if (t.isEmpty) return;
+
+    await activities.update(current.copyWith(title: t));
+
+    if (!mounted) return;
+    setState(
+      () {},
+    );
+  }
+
+  Future<void> _changeColor() async {
+    final activities = context.read<ActivitiesController>();
+    final idx = activities.activities.indexWhere((a) => a.id == widget.activityId);
+    if (idx == -1) return;
+
+    final current = activities.activities[idx];
+    int selected = current.colorIndex;
+
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('Change color'),
+              content: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: List.generate(activityPalette.length, (i) {
+                  final color = activityPalette[i];
+                  final isSelected = i == selected;
+
+                  return InkWell(
+                    onTap: () => setState(() => selected = i),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(ctx).colorScheme.onSurface
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          : null,
+                    ),
+                  );
+                }),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(selected),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (picked == null) return;
+
+    await activities.update(current.copyWith(colorIndex: picked));
+    if (!mounted) return;
+    setState(() {}); // чтобы AppBar/акценты обновились, если ты их читаешь из контроллера
+  }
+
+  Future<void> _deleteActivity() async {
+    // capture dependencies up-front
+    final sessions = context.read<SessionsController>();
+    final activities = context.read<ActivitiesController>();
+    final nav = Navigator.of(context);
+    final dialogContext = context;
+
+    final ok = await showDialog<bool>(
+      context: dialogContext,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Delete activity?'),
+          content: const Text(
+            'This will delete the activity and all its sessions.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (ok != true) return;
+
+    await sessions.resetActivity(widget.activityId);
+    await activities.delete(widget.activityId);
+
+    if (!mounted) return;
+    nav.pop();
   }
 
   // ---------- EDIT DIALOG (plain HH:mm input) ----------
@@ -427,10 +628,14 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         activityId: entry.activityId,
                         startedAt: start,
                         minutes: max(1, minutes),
-                        note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+                        note: noteCtrl.text.trim().isEmpty
+                            ? null
+                            : noteCtrl.text.trim(),
                       );
 
-                      await context.read<SessionsController>().updateEntry(updated);
+                      await context.read<SessionsController>().updateEntry(
+                        updated,
+                      );
 
                       if (ctx.mounted) Navigator.of(ctx).pop();
                     },
@@ -480,10 +685,10 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   }
 
   static int? _previewDurationMinutes(
-      DateTime base,
-      String startTxt,
-      String endTxt,
-      ) {
+    DateTime base,
+    String startTxt,
+    String endTxt,
+  ) {
     final s = _parseHHmm(startTxt);
     final e = _parseHHmm(endTxt);
     if (s == null || e == null) return null;

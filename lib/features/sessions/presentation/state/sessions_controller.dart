@@ -47,11 +47,7 @@ class SessionsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addManual(
-      String activityId,
-      int minutes, {
-        String? note,
-      }) async {
+  Future<void> addManual(String activityId, int minutes, {String? note}) async {
     if (minutes <= 0) return;
 
     final entry = SessionEntry(

@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
+import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 import 'activity_details_screen.dart';
+import 'package:tenk/features/activities/domain/models/activity.dart';
 
 const activityPalette = [
   Color(0xFF22C55E), // green
@@ -13,32 +15,14 @@ const activityPalette = [
   Color(0xFFEC4899), // pink
 ];
 
-const stubActivities = [
-  ActivityStub(id: 'guitar', title: 'Guitar', progress: 0.62, colorIndex: 3),
-  ActivityStub(id: 'running', title: 'Running', progress: 0.35, colorIndex: 1),
-  ActivityStub(id: 'sql', title: 'SQL', progress: 0.82, colorIndex: 2),
-];
-
-class ActivityStub {
-  final String id;
-  final String title;
-  final double progress;
-  final int colorIndex;
-
-  const ActivityStub({
-    required this.id,
-    required this.title,
-    required this.progress,
-    required this.colorIndex,
-  });
-}
-
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
+    final a = context.watch<ActivitiesController>();
+    final activities = a.activities;
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Activities'),
@@ -64,40 +48,43 @@ class DashboardScreen extends StatelessWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 0.92,
             ),
-            itemCount: stubActivities.length + 1, // + Add card
+            itemCount: activities.length + 1, // +add card
             itemBuilder: (context, index) {
-              if (index == stubActivities.length) {
-                return const _AddActivityCardStub();
+              if (index == activities.length) {
+                return _AddActivityCard(
+                  onTap: () => _openAddActivityDialog(context),
+                );
               }
 
-              final a = stubActivities[index];
-              return _ActivityCardStub(
-                title: a.title,
-                progress: a.progress,
-                progressColor: activityPalette[a.colorIndex % activityPalette.length],
-                totalMinutes: c.totalMinutesAllTime(a.id),
+              final act = activities[index];
+              final color =
+                  activityPalette[act.colorIndex % activityPalette.length];
+              final total = c.totalMinutesAllTime(act.id);
 
+              return _ActivityCard(
+                title: act.title,
+                totalMinutes: total,
+                progressColor: color,
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
-                        activityTitle: a.title,
-                        activityId: a.id,
+                        activityTitle: act.title,
+                        activityId: act.id,
+                        accentColor: color,
                         autoStart: false,
-                        accentColor: activityPalette[a.colorIndex % activityPalette.length],
                       ),
                     ),
                   );
                 },
-
                 onStart: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => ActivityDetailsScreen(
-                        activityTitle: a.title,
-                        activityId: a.id,
+                        activityTitle: act.title,
+                        activityId: act.id,
+                        accentColor: color,
                         autoStart: true,
-                        accentColor: activityPalette[a.colorIndex % activityPalette.length],
                       ),
                     ),
                   );
@@ -118,10 +105,7 @@ class DashboardScreen extends StatelessWidget {
             icon: Icon(Icons.grid_view_rounded),
             label: 'Home',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
+          NavigationDestination(icon: Icon(Icons.history), label: 'History'),
           NavigationDestination(
             icon: Icon(Icons.tune_rounded),
             label: 'Settings',
@@ -130,20 +114,119 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
+
+  // ---------- ADD ACTIVITY DIALOG ----------
+  Future<void> _openAddActivityDialog(BuildContext context) async {
+    final titleCtrl = TextEditingController();
+    int selected = 0;
+
+    final result = await showDialog<(String, int)>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('New activity'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'e.g. Guitar',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Color',
+                      style: Theme.of(ctx).textTheme.labelLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: List.generate(activityPalette.length, (i) {
+                      final color = activityPalette[i];
+                      final isSelected = i == selected;
+
+                      return InkWell(
+                        onTap: () => setState(() => selected = i),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? Theme.of(ctx).colorScheme.onSurface
+                                  : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () =>
+                      Navigator.of(ctx).pop((titleCtrl.text.trim(), selected)),
+                  child: const Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    final title = result.$1.trim();
+    final colorIndex = result.$2;
+
+    if (title.isEmpty) return;
+
+    final activities = context.read<ActivitiesController>();
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+
+    await activities.add(
+      Activity(id: id, title: title, colorIndex: colorIndex),
+    );
+  }
 }
 
-class _ActivityCardStub extends StatelessWidget {
+class _ActivityCard extends StatelessWidget {
   final String title;
-  final double progress;
-  final Color? progressColor;
+  final Color progressColor;
   final VoidCallback? onTap;
   final VoidCallback? onStart;
   final int totalMinutes;
 
-  const _ActivityCardStub({
+  const _ActivityCard({
     required this.title,
-    this.progress = 0.25,
-    this.progressColor,
+    required this.progressColor,
     this.onTap,
     this.onStart,
     this.totalMinutes = 0,
@@ -167,7 +250,7 @@ class _ActivityCardStub extends StatelessWidget {
               ProgressBar(
                 totalMinutesAllTime: totalMinutes,
                 compact: true,
-                color: progressColor
+                color: progressColor,
               ),
               const Spacer(),
               SizedBox(
@@ -189,8 +272,10 @@ class _ActivityCardStub extends StatelessWidget {
   }
 }
 
-class _AddActivityCardStub extends StatelessWidget {
-  const _AddActivityCardStub();
+class _AddActivityCard extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _AddActivityCard({this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -199,21 +284,20 @@ class _AddActivityCardStub extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          // TODO: открыть Create Activity
-          debugPrint('Add activity');
-        },
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.add_circle_outline, size: 36),
-                const SizedBox(height: 10),
-                Text('Add activity', style: theme.textTheme.titleMedium),
-              ],
-            ),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_circle_outline,
+                size: 40,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 10),
+              Text('Add activity', style: theme.textTheme.titleMedium),
+            ],
           ),
         ),
       ),
