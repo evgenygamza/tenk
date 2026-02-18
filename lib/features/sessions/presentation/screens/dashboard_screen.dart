@@ -113,103 +113,99 @@ class DashboardScreen extends StatelessWidget {
 
   // ---------- ADD ACTIVITY DIALOG ----------
   Future<void> _openAddActivityDialog(BuildContext context) async {
+    final activities = context.read<ActivitiesController>();
     final titleCtrl = TextEditingController();
     int selected = 0;
 
-    final result = await showDialog<(String, int)>(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setState) {
-            return AlertDialog(
-              title: const Text('New activity'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleCtrl,
-                    autofocus: true,
-                    textInputAction: TextInputAction.done,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
-                      hintText: 'e.g. Guitar',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Color',
-                      style: Theme.of(ctx).textTheme.labelLarge,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: List.generate(activityPalette.length, (i) {
-                      final color = activityPalette[i];
-                      final isSelected = i == selected;
+    try {
+      final result = await showDialog<(String, int)>(
+        context: context,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (ctx, setState) {
+              Widget colorDot(int i) {
+                final color = activityPalette[i];
+                final isSelected = i == selected;
 
-                      return InkWell(
-                        onTap: () => setState(() => selected = i),
-                        borderRadius: BorderRadius.circular(999),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? Theme.of(ctx).colorScheme.onSurface
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 18,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                      );
-                    }),
+                return InkWell(
+                  onTap: () => setState(() => selected = i),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? Theme.of(ctx).colorScheme.onSurface
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, size: 18, color: Colors.white)
+                        : null,
+                  ),
+                );
+              }
+
+              return AlertDialog(
+                title: const Text('New activity'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleCtrl,
+                      autofocus: true,
+                      textInputAction: TextInputAction.done,
+                      decoration: const InputDecoration(
+                        labelText: 'Title',
+                        hintText: 'e.g. Guitar',
+                      ),
+                      onSubmitted: (_) =>
+                          Navigator.of(ctx).pop((titleCtrl.text.trim(), selected)),
+                    ),
+                    const SizedBox(height: 14),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Color', style: Theme.of(ctx).textTheme.labelLarge),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: List.generate(activityPalette.length, colorDot),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(null),
+                    child: const Text('Cancel'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(ctx)
+                        .pop((titleCtrl.text.trim(), selected)),
+                    child: const Text('Create'),
                   ),
                 ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(null),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () =>
-                      Navigator.of(ctx).pop((titleCtrl.text.trim(), selected)),
-                  child: const Text('Create'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
 
-    if (result == null) return;
+      if (result == null) return;
 
-    final title = result.$1.trim();
-    final colorIndex = result.$2;
+      final title = result.$1.trim();
+      if (title.isEmpty) return;
 
-    if (title.isEmpty) return;
-
-    final activities = context.read<ActivitiesController>();
-    final id = DateTime.now().microsecondsSinceEpoch.toString();
-
-    await activities.add(
-      Activity(id: id, title: title, colorIndex: colorIndex),
-    );
+      final id = DateTime.now().microsecondsSinceEpoch.toString();
+      await activities.add(Activity(id: id, title: title, colorIndex: result.$2));
+    } finally {
+      titleCtrl.dispose();
+    }
   }
 }
 
