@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
-import 'activity_details_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
 import 'package:tenk/features/activities/domain/models/activity.dart';
 
 const activityPalette = [
@@ -93,8 +94,16 @@ class DashboardScreen extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
         onDestinationSelected: (i) {
-          // TODO: навигация между вкладками
-          debugPrint('Tab $i');
+          if (i == 1) {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+            );
+            return;
+          }
+          // TODO: other tabs later
+          else {
+            debugPrint('Tab $i');
+          }
         },
         destinations: const [
           NavigationDestination(

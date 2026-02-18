@@ -1,14 +1,14 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
+import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
+import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
 
 import 'dashboard_screen.dart';
 
@@ -246,7 +246,14 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 child: SessionList(
                   entries: entries,
                   onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
-                  onEdit: (entry) => _openEditDialog(context, entry),
+                  confirmDelete: (ctx, e) => confirmDeleteSessionDialog(ctx, entry: e),
+                  onEdit: (entry) async {
+                    final sessions = context.read<SessionsController>();
+                    final dialogContext = context;
+                    final updated = await showEditSessionDialog(dialogContext, entry: entry);
+                    if (updated == null) return;
+                    await sessions.updateEntry(updated);
+                  },
                 ),
               ),
             ],
@@ -520,152 +527,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     nav.pop();
   }
 
-  // ---------- EDIT DIALOG (plain HH:mm input) ----------
-  Future<void> _openEditDialog(BuildContext context, SessionEntry entry) async {
-    final accent = _accentFromContext(context);
-    final themed = _activityTheme(context, accent);
-
-    final baseDate = entry.startedAt;
-    final endInitial = entry.startedAt.add(Duration(minutes: entry.minutes));
-
-    final startCtrl = TextEditingController(text: _formatTime(baseDate));
-    final endCtrl = TextEditingController(text: _formatTime(endInitial));
-    final noteCtrl = TextEditingController(text: entry.note ?? '');
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return Theme(
-          data: themed,
-          child: StatefulBuilder(
-            builder: (ctx, setState) {
-              String? error;
-              final preview = _previewDurationMinutes(
-                baseDate,
-                startCtrl.text,
-                endCtrl.text,
-              );
-
-              return AlertDialog(
-                title: const Text('Edit session'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: startCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Start (HH:mm)',
-                        hintText: '09:30',
-                      ),
-                      keyboardType: TextInputType.datetime,
-                      onChanged: (_) => setState(() => error = null),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: endCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'End (HH:mm)',
-                        hintText: '10:15',
-                      ),
-                      keyboardType: TextInputType.datetime,
-                      onChanged: (_) => setState(() => error = null),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: noteCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Note (optional)',
-                      ),
-                      minLines: 1,
-                      maxLines: 3,
-                    ),
-                    if (preview != null) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Duration: ${_formatHoursMinutes(preview)}',
-                          style: Theme.of(ctx).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                    if (error != null) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Cancel'),
-                  ),
-                  FilledButton(
-                    onPressed: () async {
-                      final s = _parseHHmm(startCtrl.text);
-                      final e = _parseHHmm(endCtrl.text);
-                      if (s == null || e == null) {
-                        setState(() => error = 'Time format: HH:mm');
-                        return;
-                      }
-
-                      final start = DateTime(
-                        baseDate.year,
-                        baseDate.month,
-                        baseDate.day,
-                        s.$1,
-                        s.$2,
-                      );
-                      var end = DateTime(
-                        baseDate.year,
-                        baseDate.month,
-                        baseDate.day,
-                        e.$1,
-                        e.$2,
-                      );
-                      if (!end.isAfter(start)) {
-                        end = end.add(const Duration(days: 1));
-                      }
-
-                      final minutes = end.difference(start).inMinutes;
-                      if (minutes <= 0) {
-                        setState(() => error = 'End must be after Start');
-                        return;
-                      }
-
-                      final updated = SessionEntry(
-                        id: entry.id,
-                        activityId: entry.activityId,
-                        startedAt: start,
-                        minutes: max(1, minutes),
-                        note: noteCtrl.text.trim().isEmpty
-                            ? null
-                            : noteCtrl.text.trim(),
-                      );
-
-                      await context.read<SessionsController>().updateEntry(
-                        updated,
-                      );
-
-                      if (ctx.mounted) Navigator.of(ctx).pop();
-                    },
-                    child: const Text('Save'),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   // ---------- helpers ----------
   static String _formatElapsed(int seconds) {
     final mm = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -687,36 +548,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     return '$hh:$mm';
   }
 
-  static String _formatTime(DateTime dt) {
-    final hh = dt.hour.toString().padLeft(2, '0');
-    final mm = dt.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
-
-  static (int, int)? _parseHHmm(String input) {
-    final s = input.trim();
-    final m = RegExp(r'^([01]?\d|2[0-3]):([0-5]\d)$').firstMatch(s);
-    if (m == null) return null;
-    return (int.parse(m.group(1)!), int.parse(m.group(2)!));
-  }
-
-  static int? _previewDurationMinutes(
-    DateTime base,
-    String startTxt,
-    String endTxt,
-  ) {
-    final s = _parseHHmm(startTxt);
-    final e = _parseHHmm(endTxt);
-    if (s == null || e == null) return null;
-
-    final start = DateTime(base.year, base.month, base.day, s.$1, s.$2);
-    var end = DateTime(base.year, base.month, base.day, e.$1, e.$2);
-    if (!end.isAfter(start)) end = end.add(const Duration(days: 1));
-
-    final mins = end.difference(start).inMinutes;
-    if (mins <= 0) return null;
-    return mins;
-  }
 }
 
 class _TimeRow extends StatelessWidget {
