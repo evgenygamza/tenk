@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 import 'activity_details_screen.dart';
 
 const activityPalette = [
@@ -74,7 +75,7 @@ class DashboardScreen extends StatelessWidget {
                 title: a.title,
                 progress: a.progress,
                 progressColor: activityPalette[a.colorIndex % activityPalette.length],
-                todayMinutes: c.totalMinutesToday(a.id),
+                totalMinutes: c.totalMinutesAllTime(a.id),
 
                 onTap: () {
                   Navigator.of(context).push(
@@ -83,6 +84,7 @@ class DashboardScreen extends StatelessWidget {
                         activityTitle: a.title,
                         activityId: a.id,
                         autoStart: false,
+                        accentColor: activityPalette[a.colorIndex % activityPalette.length],
                       ),
                     ),
                   );
@@ -95,6 +97,7 @@ class DashboardScreen extends StatelessWidget {
                         activityTitle: a.title,
                         activityId: a.id,
                         autoStart: true,
+                        accentColor: activityPalette[a.colorIndex % activityPalette.length],
                       ),
                     ),
                   );
@@ -135,7 +138,7 @@ class _ActivityCardStub extends StatelessWidget {
   final Color? progressColor;
   final VoidCallback? onTap;
   final VoidCallback? onStart;
-  final int todayMinutes;
+  final int totalMinutes;
 
   const _ActivityCardStub({
     required this.title,
@@ -143,14 +146,12 @@ class _ActivityCardStub extends StatelessWidget {
     this.progressColor,
     this.onTap,
     this.onStart,
-    this.todayMinutes = 0,
+    this.totalMinutes = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final color = progressColor ?? scheme.primary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -163,19 +164,19 @@ class _ActivityCardStub extends StatelessWidget {
             children: [
               Text(title, style: theme.textTheme.titleMedium),
               const SizedBox(height: 10),
-              Text('Today: ${todayMinutes}m', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 10),
-              LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0),
-                color: color,
-                backgroundColor: scheme.surfaceContainerHighest,
-                minHeight: 8,
-                borderRadius: const BorderRadius.all(Radius.circular(999)),
+              ProgressBar(
+                totalMinutesAllTime: totalMinutes,
+                compact: true,
+                color: progressColor
               ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: progressColor,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: onStart,
                   child: const Text('Start'),
                 ),
