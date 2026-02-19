@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
-import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
-import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
-import 'activity_details_screen.dart';
 import 'package:tenk/features/activities/domain/models/activity.dart';
+import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
+import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
+import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/ui/progress_bar.dart';
 
 const activityPalette = [
   Color(0xFF22C55E), // green
@@ -23,14 +23,14 @@ class DashboardScreen extends StatelessWidget {
     final c = context.watch<SessionsController>();
     final a = context.watch<ActivitiesController>();
     final activities = a.activities;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Activities'),
-
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: открыть Settings
+              // TODO: open Settings (tab)
               debugPrint('Settings tapped');
             },
             icon: const Icon(Icons.settings_outlined),
@@ -48,7 +48,7 @@ class DashboardScreen extends StatelessWidget {
               crossAxisSpacing: 12,
               childAspectRatio: 0.92,
             ),
-            itemCount: activities.length + 1, // +add card
+            itemCount: activities.length + 1,
             itemBuilder: (context, index) {
               if (index == activities.length) {
                 return _AddActivityCard(
@@ -58,7 +58,7 @@ class DashboardScreen extends StatelessWidget {
 
               final act = activities[index];
               final color =
-                  activityPalette[act.colorIndex % activityPalette.length];
+              activityPalette[act.colorIndex % activityPalette.length];
               final total = c.totalMinutesAllTime(act.id);
 
               return _ActivityCard(
@@ -71,7 +71,7 @@ class DashboardScreen extends StatelessWidget {
                       builder: (_) => ActivityDetailsScreen(
                         activityId: act.id,
                         autoStart: false,
-                      )
+                      ),
                     ),
                   );
                 },
@@ -89,24 +89,6 @@ class DashboardScreen extends StatelessWidget {
             },
           ),
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (i) {
-          // TODO: навигация между вкладками
-          debugPrint('Tab $i');
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.grid_view_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(icon: Icon(Icons.history), label: 'History'),
-          NavigationDestination(
-            icon: Icon(Icons.tune_rounded),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }
@@ -163,13 +145,17 @@ class DashboardScreen extends StatelessWidget {
                         labelText: 'Title',
                         hintText: 'e.g. Guitar',
                       ),
-                      onSubmitted: (_) =>
-                          Navigator.of(ctx).pop((titleCtrl.text.trim(), selected)),
+                      onSubmitted: (_) => Navigator.of(ctx).pop(
+                        (titleCtrl.text.trim(), selected),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Color', style: Theme.of(ctx).textTheme.labelLarge),
+                      child: Text(
+                        'Color',
+                        style: Theme.of(ctx).textTheme.labelLarge,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -185,8 +171,9 @@ class DashboardScreen extends StatelessWidget {
                     child: const Text('Cancel'),
                   ),
                   FilledButton(
-                    onPressed: () => Navigator.of(ctx)
-                        .pop((titleCtrl.text.trim(), selected)),
+                    onPressed: () => Navigator.of(ctx).pop(
+                      (titleCtrl.text.trim(), selected),
+                    ),
                     child: const Text('Create'),
                   ),
                 ],
@@ -202,7 +189,9 @@ class DashboardScreen extends StatelessWidget {
       if (title.isEmpty) return;
 
       final id = DateTime.now().microsecondsSinceEpoch.toString();
-      await activities.add(Activity(id: id, title: title, colorIndex: result.$2));
+      await activities.add(
+        Activity(id: id, title: title, colorIndex: result.$2),
+      );
     } finally {
       titleCtrl.dispose();
     }

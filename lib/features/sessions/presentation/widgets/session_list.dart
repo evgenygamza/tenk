@@ -6,12 +6,18 @@ class SessionList extends StatelessWidget {
   final List<SessionEntry> entries;
   final Future<void> Function(String id) onDelete;
   final void Function(SessionEntry entry) onEdit;
+  final Widget Function(BuildContext context, SessionEntry entry)?
+  leadingBuilder;
+  final Future<bool> Function(BuildContext context, SessionEntry entry)?
+  confirmDelete;
 
   const SessionList({
     super.key,
     required this.entries,
     required this.onDelete,
     required this.onEdit,
+    this.leadingBuilder,
+    this.confirmDelete,
   });
 
   @override
@@ -30,6 +36,8 @@ class SessionList extends StatelessWidget {
             ? _formatDateTime(e.startedAt)
             : '${_formatDateTime(e.startedAt)}\n${e.note}';
 
+        final leading = leadingBuilder?.call(context, e);
+
         return Dismissible(
           key: ValueKey(e.id),
           direction: DismissDirection.horizontal,
@@ -43,7 +51,8 @@ class SessionList extends StatelessWidget {
             }
 
             // Swipe left -> delete
-            return true;
+            if (confirmDelete == null) return true;
+            return await confirmDelete!(context, e);
           },
           onDismissed: (direction) async {
             if (direction == DismissDirection.endToStart) {
@@ -51,6 +60,7 @@ class SessionList extends StatelessWidget {
             }
           },
           child: ListTile(
+            leading: leading,
             title: Text('${e.minutes} min'),
             subtitle: Text(subtitle),
             isThreeLine: e.note != null && e.note!.trim().isNotEmpty,
