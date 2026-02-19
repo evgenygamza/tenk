@@ -260,10 +260,10 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         onPressed: () {
                           context.read<SessionsController>().addManual(
                             widget.activityId,
-                            15,
+                            60,
                           );
                         },
-                        child: const Text('+15 min'),
+                        child: const Text('+1 hour'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -521,37 +521,5 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     if (m == 0) return '${h}h';
     return '${h}h ${m}m';
   }
-
-  static String _formatTimeOfDay(TimeOfDay t) {
-    final hh = t.hour.toString().padLeft(2, '0');
-    final mm = t.minute.toString().padLeft(2, '0');
-    return '$hh:$mm';
-  }
 }
 
-class _TimeRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  const _TimeRow({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        child: Text(value),
-      ),
-    );
-  }
-}
