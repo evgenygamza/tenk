@@ -6,7 +6,6 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
-import 'package:tenk/ui/nav_bar.dart';
 
 import 'activity_details_screen.dart';
 import 'dashboard_screen.dart'; // activityPalette
@@ -94,42 +93,6 @@ class HistoryScreen extends StatelessWidget {
                   );
                 },
               ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: NavBar(
-              selectedIndex: 2,
-              onDestinationSelected: (i) {
-                if (i == 1) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const DashboardScreen(),
-                    ),
-                  );
-                  return;
-                }
-                if (i == 2) {
-                  // already here
-                  return;
-                }
-                // TODO: Settings later
-                debugPrint('Tab $i');
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.grid_view_rounded),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.history),
-                  label: 'History',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.tune_rounded),
-                  label: 'Settings',
-                ),
-              ],
             ),
           ),
         ],

@@ -8,11 +8,12 @@ import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.da
 import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
 import 'package:tenk/features/sessions/presentation/screens/dashboard_screen.dart';
 
+import 'package:tenk/features/sessions/presentation/widgets/stop_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
-import 'package:tenk/ui/progress_bar.dart';
 
+import 'package:tenk/ui/progress_bar.dart';
 import 'package:tenk/ui/nav_bar.dart';
 
 enum _ActivityMenuAction { rename, changeColor, delete }
@@ -200,11 +201,30 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             onPressed: c.elapsedSeconds == 0
                                 ? null
                                 : () async {
-                                    context
-                                        .read<SessionsController>()
-                                        .pauseTimer();
-                                    await _openStopDialog(context);
-                                  },
+                              final sessions = context.read<SessionsController>();
+
+                              sessions.pauseTimer();
+
+                              final now = DateTime.now();
+                              final initialEnd = now;
+                              final initialStart =
+                              initialEnd.subtract(Duration(seconds: sessions.elapsedSeconds));
+
+                              final result = await StopSessionDialog.open(
+                                context,
+                                initialStart: initialStart,
+                                initialEnd: initialEnd,
+                              );
+
+                              if (!context.mounted || result == null) return;
+
+                              await sessions.stopAndSave(
+                                activityId: widget.activityId,
+                                note: result.note,
+                                startedAt: result.startedAt,
+                                finishedAt: result.finishedAt,
+                              );
+                            },
                             child: const Text('Stop'),
                           ),
                         ),
@@ -325,117 +345,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  // ---------- STOP DIALOG (time picker version stays for MVP) ----------
-  Future<void> _openStopDialog(BuildContext context) async {
-    final c = context.read<SessionsController>();
-    final accent = _accentFromContext(context);
-    final themed = _activityTheme(context, accent);
-
-    final now = DateTime.now();
-    final endInit = now;
-    final startInit = endInit.subtract(Duration(seconds: c.elapsedSeconds));
-
-    TimeOfDay startT = TimeOfDay.fromDateTime(startInit);
-    TimeOfDay endT = TimeOfDay.fromDateTime(endInit);
-
-    final noteController = TextEditingController();
-
-    Future<TimeOfDay?> pickTime(TimeOfDay initial) {
-      return showTimePicker(context: context, initialTime: initial);
-    }
-
-    DateTime combineToday(TimeOfDay t) =>
-        DateTime(now.year, now.month, now.day, t.hour, t.minute);
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Theme(
-          data: themed,
-          child: StatefulBuilder(
-            builder: (ctx, setState) {
-              var start = combineToday(startT);
-              var end = combineToday(endT);
-
-              if (end.isAtSameMomentAs(start)) {
-                end = end.add(const Duration(minutes: 1));
-              } else if (end.isBefore(start)) {
-                end = end.add(const Duration(days: 1));
-              }
-
-              final durationMinutes = end.difference(start).inMinutes;
-              final invalid = durationMinutes <= 0;
-
-              return AlertDialog(
-                title: const Text('Add details'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _TimeRow(
-                      label: 'Start time',
-                      value: _formatTimeOfDay(startT),
-                      onTap: () async {
-                        final picked = await pickTime(startT);
-                        if (picked == null) return;
-                        setState(() => startT = picked);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _TimeRow(
-                      label: 'End time',
-                      value: _formatTimeOfDay(endT),
-                      onTap: () async {
-                        final picked = await pickTime(endT);
-                        if (picked == null) return;
-                        setState(() => endT = picked);
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Duration: ${_formatHoursMinutes(durationMinutes)}',
-                        style: Theme.of(ctx).textTheme.bodySmall,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: noteController,
-                      decoration: const InputDecoration(
-                        labelText: 'Note (optional)',
-                        hintText: 'Add a note…',
-                      ),
-                      minLines: 1,
-                      maxLines: 3,
-                    ),
-                  ],
-                ),
-                actions: [
-                  FilledButton(
-                    onPressed: invalid
-                        ? null
-                        : () async {
-                            final note = noteController.text.trim();
-                            await c.stopAndSave(
-                              activityId: widget.activityId,
-                              note: note.isEmpty ? null : note,
-                              startedAt: start,
-                              finishedAt: end,
-                            );
-                            if (ctx.mounted) Navigator.of(ctx).pop();
-                          },
-                    child: const Text('Save'),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      },
     );
   }
 
