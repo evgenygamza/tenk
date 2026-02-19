@@ -6,7 +6,7 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
-import 'package:tenk/features/sessions/presentation/widgets/nav_bar.dart';
+import 'package:tenk/ui/nav_bar.dart';
 
 import 'activity_details_screen.dart';
 import 'dashboard_screen.dart'; // activityPalette
