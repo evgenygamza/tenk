@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
-import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
+import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
-import 'package:tenk/features/activities/domain/models/activity.dart';
+import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/sessions/presentation/widgets/nav_bar.dart';
+import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
+import 'package:tenk/ui/ui_tokens.dart';
 
 const activityPalette = [
   Color(0xFF22C55E), // green
@@ -24,10 +26,15 @@ class DashboardScreen extends StatelessWidget {
     final c = context.watch<SessionsController>();
     final a = context.watch<ActivitiesController>();
     final activities = a.activities;
+
+    final navInset =
+        (UiTokens.navHeight * 0.55) +
+            UiTokens.navPadding.bottom +
+            MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Activities'),
-
         actions: [
           IconButton(
             onPressed: () {
@@ -39,81 +46,91 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.92,
-            ),
-            itemCount: activities.length + 1, // +add card
-            itemBuilder: (context, index) {
-              if (index == activities.length) {
-                return _AddActivityCard(
-                  onTap: () => _openAddActivityDialog(context),
-                );
-              }
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                padding: EdgeInsets.only(bottom: navInset),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.92,
+                ),
+                itemCount: activities.length + 1, // +add card
+                itemBuilder: (context, index) {
+                  if (index == activities.length) {
+                    return _AddActivityCard(
+                      onTap: () => _openAddActivityDialog(context),
+                    );
+                  }
 
-              final act = activities[index];
-              final color =
+                  final act = activities[index];
+                  final color =
                   activityPalette[act.colorIndex % activityPalette.length];
-              final total = c.totalMinutesAllTime(act.id);
+                  final total = c.totalMinutesAllTime(act.id);
 
-              return _ActivityCard(
-                title: act.title,
-                totalMinutes: total,
-                progressColor: color,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ActivityDetailsScreen(
-                        activityId: act.id,
-                        autoStart: false,
-                      )
-                    ),
+                  return _ActivityCard(
+                    title: act.title,
+                    totalMinutes: total,
+                    progressColor: color,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ActivityDetailsScreen(
+                            activityId: act.id,
+                            autoStart: false,
+                          ),
+                        ),
+                      );
+                    },
+                    onStart: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ActivityDetailsScreen(
+                            activityId: act.id,
+                            autoStart: true,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
-                onStart: () {
+              ),
+            ),
+          ),
+
+          // Floating nav pill over content
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: NavBar(
+              selectedIndex: 0,
+              onDestinationSelected: (i) {
+                if (i == 1) {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => ActivityDetailsScreen(
-                        activityId: act.id,
-                        autoStart: true,
-                      ),
+                      builder: (_) => const HistoryScreen(),
                     ),
                   );
-                },
-              );
-            },
-          ),
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (i) {
-          if (i == 1) {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
-            );
-            return;
-          }
-          // TODO: other tabs later
-          else {
-            debugPrint('Tab $i');
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.grid_view_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(icon: Icon(Icons.history), label: 'History'),
-          NavigationDestination(
-            icon: Icon(Icons.tune_rounded),
-            label: 'Settings',
+                  return;
+                }
+                // TODO: other tabs later
+                debugPrint('Tab $i');
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.grid_view_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+                NavigationDestination(
+                  icon: Icon(Icons.tune_rounded),
+                  label: 'Settings',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -172,13 +189,16 @@ class DashboardScreen extends StatelessWidget {
                         labelText: 'Title',
                         hintText: 'e.g. Guitar',
                       ),
-                      onSubmitted: (_) =>
-                          Navigator.of(ctx).pop((titleCtrl.text.trim(), selected)),
+                      onSubmitted: (_) => Navigator.of(ctx)
+                          .pop((titleCtrl.text.trim(), selected)),
                     ),
                     const SizedBox(height: 14),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Color', style: Theme.of(ctx).textTheme.labelLarge),
+                      child: Text(
+                        'Color',
+                        style: Theme.of(ctx).textTheme.labelLarge,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -211,7 +231,9 @@ class DashboardScreen extends StatelessWidget {
       if (title.isEmpty) return;
 
       final id = DateTime.now().microsecondsSinceEpoch.toString();
-      await activities.add(Activity(id: id, title: title, colorIndex: result.$2));
+      await activities.add(
+        Activity(id: id, title: title, colorIndex: result.$2),
+      );
     } finally {
       titleCtrl.dispose();
     }

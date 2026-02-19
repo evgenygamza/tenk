@@ -2,15 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
-import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
-import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
+
+import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/dashboard_screen.dart';
+
 import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
+import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
+import 'package:tenk/features/sessions/presentation/widgets/progress_bar.dart';
 
-import 'dashboard_screen.dart';
+import 'package:tenk/features/sessions/presentation/widgets/nav_bar.dart';
 
 enum _ActivityMenuAction { rename, changeColor, delete }
 
@@ -109,7 +113,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
-          backgroundColor: accent,
+          backgroundColor: _accentFromContext(context),
           foregroundColor: Colors.white,
           actions: [
             PopupMenuButton<_ActivityMenuAction>(
@@ -143,121 +147,162 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Today: ${_formatHoursMinutes(c.totalMinutesToday(widget.activityId))}',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'All time: ${_formatHoursMinutes(c.totalMinutesAllTime(widget.activityId))}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              ProgressBar(
-                totalMinutesAllTime: c.totalMinutesAllTime(widget.activityId),
-                color: accent,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Timer: ${_formatElapsed(c.elapsedSeconds)}',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: c.isRunning ? null : () => c.startTimer(),
-                      child: const Text('Start'),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Today: ${_formatHoursMinutes(c.totalMinutesToday(widget.activityId))}',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: c.isRunning ? () => c.pauseTimer() : null,
-                      child: const Text('Pause'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'All time: ${_formatHoursMinutes(c.totalMinutesAllTime(widget.activityId))}',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: c.elapsedSeconds == 0
-                          ? null
-                          : () async {
+                    const SizedBox(height: 16),
+                    ProgressBar(
+                      totalMinutesAllTime: c.totalMinutesAllTime(widget.activityId),
+                      color: _accentFromContext(context),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Timer: ${_formatElapsed(c.elapsedSeconds)}',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: c.isRunning ? null : () => c.startTimer(),
+                            child: const Text('Start'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: c.isRunning ? () => c.pauseTimer() : null,
+                            child: const Text('Pause'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: c.elapsedSeconds == 0
+                                ? null
+                                : () async {
                               context.read<SessionsController>().pauseTimer();
                               await _openStopDialog(context);
                             },
-                      child: const Text('Stop'),
+                            child: const Text('Stop'),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          final themed = _activityTheme(
+                            context,
+                            _accentFromContext(context),
+                          );
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => Theme(
+                                data: themed,
+                                child: AddManualScreen(activityId: widget.activityId),
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('Add manually'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          context.read<SessionsController>().addManual(
+                            widget.activityId,
+                            15,
+                          );
+                        },
+                        child: const Text('+15 min'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () {
+                          context
+                              .read<SessionsController>()
+                              .resetActivity(widget.activityId);
+                        },
+                        child: const Text('Reset'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SessionList(
+                        entries: entries,
+                        onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
+                        confirmDelete: (ctx, e) => confirmDeleteSessionDialog(ctx, entry: e),
+                        onEdit: (entry) async {
+                          final sessions = context.read<SessionsController>();
+                          final dialogContext = context;
+                          final updated = await showEditSessionDialog(dialogContext, entry: entry);
+                          if (updated == null) return;
+                          await sessions.updateEntry(updated);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: NavBar(
+                selectedIndex: 0,
+                onDestinationSelected: (i) {
+                  if (i == 0) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (_) => const DashboardScreen()),
+                    );
+                    return;
+                  }
+                  if (i == 1) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+                    );
+                    return;
+                  }
+                  debugPrint('Tab $i');
+                },
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.grid_view_rounded),
+                    label: 'Home',
+                  ),
+                  NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+                  NavigationDestination(
+                    icon: Icon(Icons.tune_rounded),
+                    label: 'Settings',
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    final themed = _activityTheme(context, accent);
-
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => Theme(
-                          data: themed,
-                          child: AddManualScreen(activityId: widget.activityId),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('Add manually'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    context.read<SessionsController>().addManual(
-                      widget.activityId,
-                      15,
-                    );
-                  },
-                  child: const Text('+15 min'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    context.read<SessionsController>().resetActivity(
-                      widget.activityId,
-                    );
-                  },
-                  child: const Text('Reset'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SessionList(
-                  entries: entries,
-                  onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
-                  confirmDelete: (ctx, e) => confirmDeleteSessionDialog(ctx, entry: e),
-                  onEdit: (entry) async {
-                    final sessions = context.read<SessionsController>();
-                    final dialogContext = context;
-                    final updated = await showEditSessionDialog(dialogContext, entry: entry);
-                    if (updated == null) return;
-                    await sessions.updateEntry(updated);
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
