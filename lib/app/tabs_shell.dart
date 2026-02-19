@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tenk/features/sessions/presentation/screens/dashboard_screen.dart';
 import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/settings_screen.dart';
 
 class TabsShell extends StatefulWidget {
   const TabsShell({super.key});
@@ -36,7 +37,7 @@ class _TabsShellState extends State<TabsShell> {
           children: const [
             DashboardScreen(),
             HistoryScreen(),
-            _SettingsStubScreen(),
+            SettingsScreen(),
           ],
         ),
         bottomNavigationBar: NavigationBarTheme(
@@ -50,7 +51,7 @@ class _TabsShellState extends State<TabsShell> {
             destinations: const [
               NavigationDestination(
                 icon: Icon(Icons.grid_view_rounded),
-                label: 'Home',
+                label: 'Dashbord',
               ),
               NavigationDestination(
                 icon: Icon(Icons.history),
@@ -65,14 +66,5 @@ class _TabsShellState extends State<TabsShell> {
         ),
       ),
     );
-  }
-}
-
-class _SettingsStubScreen extends StatelessWidget {
-  const _SettingsStubScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Settings (stub)'));
   }
 }

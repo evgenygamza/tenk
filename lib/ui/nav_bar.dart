@@ -15,7 +15,10 @@ class NavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Flutter NavigationBar uses 0-based indices.
-    final materialSelected = (selectedIndex - 1).clamp(0, destinations.length - 1);
+    final materialSelected = (selectedIndex - 1).clamp(
+      0,
+      destinations.length - 1,
+    );
 
     return NavigationBar(
       selectedIndex: materialSelected,
