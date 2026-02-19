@@ -24,17 +24,15 @@ class StopSessionDialog extends StatefulWidget {
 
   /// Convenience helper: returns null if cancelled.
   static Future<StopSessionResult?> open(
-      BuildContext context, {
-        required DateTime initialStart,
-        required DateTime initialEnd,
-      }) {
+    BuildContext context, {
+    required DateTime initialStart,
+    required DateTime initialEnd,
+  }) {
     return showDialog<StopSessionResult>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => StopSessionDialog(
-        initialStart: initialStart,
-        initialEnd: initialEnd,
-      ),
+      builder: (ctx) =>
+          StopSessionDialog(initialStart: initialStart, initialEnd: initialEnd),
     );
   }
 
@@ -152,15 +150,15 @@ class _StopSessionDialogState extends State<StopSessionDialog> {
           onPressed: invalid
               ? null
               : () {
-            final note = _noteController.text.trim();
-            Navigator.of(context).pop(
-              StopSessionResult(
-                startedAt: start,
-                finishedAt: end,
-                note: note.isEmpty ? null : note,
-              ),
-            );
-          },
+                  final note = _noteController.text.trim();
+                  Navigator.of(context).pop(
+                    StopSessionResult(
+                      startedAt: start,
+                      finishedAt: end,
+                      note: note.isEmpty ? null : note,
+                    ),
+                  );
+                },
           child: const Text('Save'),
         ),
       ],

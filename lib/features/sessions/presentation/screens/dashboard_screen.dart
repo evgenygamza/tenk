@@ -25,19 +25,7 @@ class DashboardScreen extends StatelessWidget {
     final activities = a.activities;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Activities'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              // TODO: open Settings (tab)
-              debugPrint('Settings tapped');
-            },
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('My Activities')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -58,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
 
               final act = activities[index];
               final color =
-              activityPalette[act.colorIndex % activityPalette.length];
+                  activityPalette[act.colorIndex % activityPalette.length];
               final total = c.totalMinutesAllTime(act.id);
 
               return _ActivityCard(
@@ -145,9 +133,9 @@ class DashboardScreen extends StatelessWidget {
                         labelText: 'Title',
                         hintText: 'e.g. Guitar',
                       ),
-                      onSubmitted: (_) => Navigator.of(ctx).pop(
-                        (titleCtrl.text.trim(), selected),
-                      ),
+                      onSubmitted: (_) => Navigator.of(
+                        ctx,
+                      ).pop((titleCtrl.text.trim(), selected)),
                     ),
                     const SizedBox(height: 14),
                     Align(
@@ -171,9 +159,9 @@ class DashboardScreen extends StatelessWidget {
                     child: const Text('Cancel'),
                   ),
                   FilledButton(
-                    onPressed: () => Navigator.of(ctx).pop(
-                      (titleCtrl.text.trim(), selected),
-                    ),
+                    onPressed: () => Navigator.of(
+                      ctx,
+                    ).pop((titleCtrl.text.trim(), selected)),
                     child: const Text('Create'),
                   ),
                 ],

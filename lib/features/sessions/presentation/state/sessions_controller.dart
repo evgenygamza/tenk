@@ -19,15 +19,6 @@ class SessionsController extends ChangeNotifier {
     _load();
   }
 
-  // int get totalMinutesAllTime => entries.fold(0, (sum, e) => sum + e.minutes);
-  //
-  // int get totalMinutesToday {
-  //   final today = _todayKey();
-  //   return entries
-  //       .where((e) => _dateKey(e.startedAt) == today)
-  //       .fold(0, (sum, e) => sum + e.minutes);
-  // }
-
   int totalMinutesAllTime(String activityId) {
     return entries
         .where((e) => e.activityId == activityId)
@@ -152,6 +143,16 @@ class SessionsController extends ChangeNotifier {
     notifyListeners();
 
     await _repo.saveEntries(entries);
+  }
+
+  Future<void> resetAll() async {
+    pauseTimer();
+    elapsedSeconds = 0;
+
+    entries = [];
+    notifyListeners();
+
+    await _repo.clear();
   }
 
   String _todayKey() => _dateKey(DateTime.now());

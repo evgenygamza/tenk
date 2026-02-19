@@ -201,30 +201,36 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             onPressed: c.elapsedSeconds == 0
                                 ? null
                                 : () async {
-                              final sessions = context.read<SessionsController>();
+                                    final sessions = context
+                                        .read<SessionsController>();
 
-                              sessions.pauseTimer();
+                                    sessions.pauseTimer();
 
-                              final now = DateTime.now();
-                              final initialEnd = now;
-                              final initialStart =
-                              initialEnd.subtract(Duration(seconds: sessions.elapsedSeconds));
+                                    final now = DateTime.now();
+                                    final initialEnd = now;
+                                    final initialStart = initialEnd.subtract(
+                                      Duration(
+                                        seconds: sessions.elapsedSeconds,
+                                      ),
+                                    );
 
-                              final result = await StopSessionDialog.open(
-                                context,
-                                initialStart: initialStart,
-                                initialEnd: initialEnd,
-                              );
+                                    final result = await StopSessionDialog.open(
+                                      context,
+                                      initialStart: initialStart,
+                                      initialEnd: initialEnd,
+                                    );
 
-                              if (!context.mounted || result == null) return;
+                                    if (!context.mounted || result == null) {
+                                      return;
+                                    }
 
-                              await sessions.stopAndSave(
-                                activityId: widget.activityId,
-                                note: result.note,
-                                startedAt: result.startedAt,
-                                finishedAt: result.finishedAt,
-                              );
-                            },
+                                    await sessions.stopAndSave(
+                                      activityId: widget.activityId,
+                                      note: result.note,
+                                      startedAt: result.startedAt,
+                                      finishedAt: result.finishedAt,
+                                    );
+                                  },
                             child: const Text('Stop'),
                           ),
                         ),
@@ -522,4 +528,3 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     return '${h}h ${m}m';
   }
 }
-
