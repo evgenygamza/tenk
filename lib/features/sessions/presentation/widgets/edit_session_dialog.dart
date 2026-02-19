@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 Future<SessionEntry?> showEditSessionDialog(
-    BuildContext context, {
-      required SessionEntry entry,
-    }) async {
+  BuildContext context, {
+  required SessionEntry entry,
+}) async {
   final baseDate = entry.startedAt;
   final endInitial = entry.startedAt.add(Duration(minutes: entry.minutes));
 
@@ -110,7 +110,9 @@ Future<SessionEntry?> showEditSessionDialog(
                       e.$1,
                       e.$2,
                     );
-                    if (!end.isAfter(start)) end = end.add(const Duration(days: 1));
+                    if (!end.isAfter(start)) {
+                      end = end.add(const Duration(days: 1));
+                    }
 
                     final minutes = end.difference(start).inMinutes;
                     if (minutes <= 0) {
@@ -123,7 +125,9 @@ Future<SessionEntry?> showEditSessionDialog(
                       activityId: entry.activityId,
                       startedAt: start,
                       minutes: max(1, minutes),
-                      note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
+                      note: noteCtrl.text.trim().isEmpty
+                          ? null
+                          : noteCtrl.text.trim(),
                     );
 
                     Navigator.of(ctx).pop(updated);

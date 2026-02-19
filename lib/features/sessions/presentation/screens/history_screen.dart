@@ -19,9 +19,7 @@ class HistoryScreen extends StatelessWidget {
     final sessions = context.watch<SessionsController>();
     final activitiesC = context.watch<ActivitiesController>();
 
-    final byId = {
-      for (final a in activitiesC.activities) a.id: a,
-    };
+    final byId = {for (final a in activitiesC.activities) a.id: a};
 
     final items = [...sessions.entries]
       ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
@@ -35,12 +33,17 @@ class HistoryScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: SessionList(
                 entries: items,
-                onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
-                confirmDelete: (ctx, e) => confirmDeleteSessionDialog(ctx, entry: e),
+                onDelete: (id) =>
+                    context.read<SessionsController>().deleteEntry(id),
+                confirmDelete: (ctx, e) =>
+                    confirmDeleteSessionDialog(ctx, entry: e),
                 onEdit: (entry) async {
                   final sessions = context.read<SessionsController>();
                   final dialogContext = context;
-                  final updated = await showEditSessionDialog(dialogContext, entry: entry);
+                  final updated = await showEditSessionDialog(
+                    dialogContext,
+                    entry: entry,
+                  );
                   if (updated == null) return;
                   await sessions.updateEntry(updated);
                 },
@@ -49,7 +52,8 @@ class HistoryScreen extends StatelessWidget {
                   final title = act?.title ?? e.activityId;
                   final color = act == null
                       ? Theme.of(ctx).colorScheme.primary
-                      : activityPalette[act.colorIndex % activityPalette.length];
+                      : activityPalette[act.colorIndex %
+                            activityPalette.length];
 
                   return InkWell(
                     borderRadius: BorderRadius.circular(999),
@@ -71,7 +75,10 @@ class HistoryScreen extends StatelessWidget {
                         Container(
                           width: 10,
                           height: 10,
-                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         ConstrainedBox(
@@ -92,15 +99,21 @@ class HistoryScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: NavBar(
-              selectedIndex: 1,
+              selectedIndex: 2,
               onDestinationSelected: (i) {
-                if (i == 0) {
+                if (i == 1) {
                   Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const DashboardScreen()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => const DashboardScreen(),
+                    ),
                   );
                   return;
                 }
-                // TODO: Settings позже
+                if (i == 2) {
+                  // already here
+                  return;
+                }
+                // TODO: Settings later
                 debugPrint('Tab $i');
               },
               destinations: const [
@@ -108,7 +121,10 @@ class HistoryScreen extends StatelessWidget {
                   icon: Icon(Icons.grid_view_rounded),
                   label: 'Home',
                 ),
-                NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+                NavigationDestination(
+                  icon: Icon(Icons.history),
+                  label: 'History',
+                ),
                 NavigationDestination(
                   icon: Icon(Icons.tune_rounded),
                   label: 'Settings',

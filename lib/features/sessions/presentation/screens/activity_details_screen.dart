@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -84,9 +83,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
     if (idx == -1) return Theme.of(context).colorScheme.primary;
 
-    return activityPalette[
-    a.activities[idx].colorIndex % activityPalette.length
-    ];
+    return activityPalette[a.activities[idx].colorIndex %
+        activityPalette.length];
   }
 
   String _titleFromContext(BuildContext context) {
@@ -166,7 +164,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     ),
                     const SizedBox(height: 16),
                     ProgressBar(
-                      totalMinutesAllTime: c.totalMinutesAllTime(widget.activityId),
+                      totalMinutesAllTime: c.totalMinutesAllTime(
+                        widget.activityId,
+                      ),
                       color: _accentFromContext(context),
                     ),
                     const SizedBox(height: 16),
@@ -179,14 +179,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       children: [
                         Expanded(
                           child: FilledButton(
-                            onPressed: c.isRunning ? null : () => c.startTimer(),
+                            onPressed: c.isRunning
+                                ? null
+                                : () => c.startTimer(),
                             child: const Text('Start'),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: FilledButton(
-                            onPressed: c.isRunning ? () => c.pauseTimer() : null,
+                            onPressed: c.isRunning
+                                ? () => c.pauseTimer()
+                                : null,
                             child: const Text('Pause'),
                           ),
                         ),
@@ -196,9 +200,11 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             onPressed: c.elapsedSeconds == 0
                                 ? null
                                 : () async {
-                              context.read<SessionsController>().pauseTimer();
-                              await _openStopDialog(context);
-                            },
+                                    context
+                                        .read<SessionsController>()
+                                        .pauseTimer();
+                                    await _openStopDialog(context);
+                                  },
                             child: const Text('Stop'),
                           ),
                         ),
@@ -217,7 +223,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                             MaterialPageRoute<void>(
                               builder: (_) => Theme(
                                 data: themed,
-                                child: AddManualScreen(activityId: widget.activityId),
+                                child: AddManualScreen(
+                                  activityId: widget.activityId,
+                                ),
                               ),
                             ),
                           );
@@ -243,9 +251,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: () {
-                          context
-                              .read<SessionsController>()
-                              .resetActivity(widget.activityId);
+                          context.read<SessionsController>().resetActivity(
+                            widget.activityId,
+                          );
                         },
                         child: const Text('Reset'),
                       ),
@@ -254,12 +262,17 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     Expanded(
                       child: SessionList(
                         entries: entries,
-                        onDelete: (id) => context.read<SessionsController>().deleteEntry(id),
-                        confirmDelete: (ctx, e) => confirmDeleteSessionDialog(ctx, entry: e),
+                        onDelete: (id) =>
+                            context.read<SessionsController>().deleteEntry(id),
+                        confirmDelete: (ctx, e) =>
+                            confirmDeleteSessionDialog(ctx, entry: e),
                         onEdit: (entry) async {
                           final sessions = context.read<SessionsController>();
                           final dialogContext = context;
-                          final updated = await showEditSessionDialog(dialogContext, entry: entry);
+                          final updated = await showEditSessionDialog(
+                            dialogContext,
+                            entry: entry,
+                          );
                           if (updated == null) return;
                           await sessions.updateEntry(updated);
                         },
@@ -275,15 +288,19 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               child: NavBar(
                 selectedIndex: 0,
                 onDestinationSelected: (i) {
-                  if (i == 0) {
+                  if (i == 1) {
                     Navigator.of(context).push(
-                      MaterialPageRoute<void>(builder: (_) => const DashboardScreen()),
+                      MaterialPageRoute<void>(
+                        builder: (_) => const DashboardScreen(),
+                      ),
                     );
                     return;
                   }
-                  if (i == 1) {
+                  if (i == 2) {
                     Navigator.of(context).push(
-                      MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+                      MaterialPageRoute<void>(
+                        builder: (_) => const HistoryScreen(),
+                      ),
                     );
                     return;
                   }
@@ -294,7 +311,10 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     icon: Icon(Icons.grid_view_rounded),
                     label: 'Home',
                   ),
-                  NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+                  NavigationDestination(
+                    icon: Icon(Icons.history),
+                    label: 'History',
+                  ),
                   NavigationDestination(
                     icon: Icon(Icons.tune_rounded),
                     label: 'Settings',
@@ -461,14 +481,14 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     await activities.update(current.copyWith(title: t));
 
     if (!mounted) return;
-    setState(
-      () {},
-    );
+    setState(() {});
   }
 
   Future<void> _changeColor() async {
     final activities = context.read<ActivitiesController>();
-    final idx = activities.activities.indexWhere((a) => a.id == widget.activityId);
+    final idx = activities.activities.indexWhere(
+      (a) => a.id == widget.activityId,
+    );
     if (idx == -1) return;
 
     final current = activities.activities[idx];
@@ -505,7 +525,11 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          ? const Icon(
+                              Icons.check,
+                              size: 18,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                   );
@@ -531,7 +555,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
     await activities.update(current.copyWith(colorIndex: picked));
     if (!mounted) return;
-    setState(() {}); // чтобы AppBar/акценты обновились, если ты их читаешь из контроллера
+    setState(
+      () {},
+    ); // чтобы AppBar/акценты обновились, если ты их читаешь из контроллера
   }
 
   Future<void> _deleteActivity() async {
@@ -592,7 +618,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     final mm = t.minute.toString().padLeft(2, '0');
     return '$hh:$mm';
   }
-
 }
 
 class _TimeRow extends StatelessWidget {

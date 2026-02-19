@@ -6,8 +6,10 @@ class SessionList extends StatelessWidget {
   final List<SessionEntry> entries;
   final Future<void> Function(String id) onDelete;
   final void Function(SessionEntry entry) onEdit;
-  final Widget Function(BuildContext context, SessionEntry entry)? leadingBuilder;
-  final Future<bool> Function(BuildContext context, SessionEntry entry)? confirmDelete;
+  final Widget Function(BuildContext context, SessionEntry entry)?
+  leadingBuilder;
+  final Future<bool> Function(BuildContext context, SessionEntry entry)?
+  confirmDelete;
 
   const SessionList({
     super.key,
@@ -15,7 +17,7 @@ class SessionList extends StatelessWidget {
     required this.onDelete,
     required this.onEdit,
     this.leadingBuilder,
-    this.confirmDelete
+    this.confirmDelete,
   });
 
   @override

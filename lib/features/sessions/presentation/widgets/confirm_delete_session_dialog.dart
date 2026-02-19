@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 Future<bool> confirmDeleteSessionDialog(
-    BuildContext context, {
-      required SessionEntry entry,
-    }) async {
+  BuildContext context, {
+  required SessionEntry entry,
+}) async {
   final dialogContext = context;
 
   final ok = await showDialog<bool>(

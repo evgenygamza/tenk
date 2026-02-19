@@ -29,8 +29,8 @@ class DashboardScreen extends StatelessWidget {
 
     final navInset =
         (UiTokens.navHeight * 0.55) +
-            UiTokens.navPadding.bottom +
-            MediaQuery.of(context).padding.bottom;
+        UiTokens.navPadding.bottom +
+        MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       appBar: AppBar(
@@ -69,7 +69,7 @@ class DashboardScreen extends StatelessWidget {
 
                   final act = activities[index];
                   final color =
-                  activityPalette[act.colorIndex % activityPalette.length];
+                      activityPalette[act.colorIndex % activityPalette.length];
                   final total = c.totalMinutesAllTime(act.id);
 
                   return _ActivityCard(
@@ -106,9 +106,13 @@ class DashboardScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: NavBar(
-              selectedIndex: 0,
+              selectedIndex: 1,
               onDestinationSelected: (i) {
                 if (i == 1) {
+                  // already here
+                  return;
+                }
+                if (i == 2) {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const HistoryScreen(),
@@ -116,7 +120,7 @@ class DashboardScreen extends StatelessWidget {
                   );
                   return;
                 }
-                // TODO: other tabs later
+                // TODO: Settings later
                 debugPrint('Tab $i');
               },
               destinations: const [
@@ -124,7 +128,10 @@ class DashboardScreen extends StatelessWidget {
                   icon: Icon(Icons.grid_view_rounded),
                   label: 'Home',
                 ),
-                NavigationDestination(icon: Icon(Icons.history), label: 'History'),
+                NavigationDestination(
+                  icon: Icon(Icons.history),
+                  label: 'History',
+                ),
                 NavigationDestination(
                   icon: Icon(Icons.tune_rounded),
                   label: 'Settings',
@@ -189,8 +196,9 @@ class DashboardScreen extends StatelessWidget {
                         labelText: 'Title',
                         hintText: 'e.g. Guitar',
                       ),
-                      onSubmitted: (_) => Navigator.of(ctx)
-                          .pop((titleCtrl.text.trim(), selected)),
+                      onSubmitted: (_) => Navigator.of(
+                        ctx,
+                      ).pop((titleCtrl.text.trim(), selected)),
                     ),
                     const SizedBox(height: 14),
                     Align(
@@ -214,8 +222,9 @@ class DashboardScreen extends StatelessWidget {
                     child: const Text('Cancel'),
                   ),
                   FilledButton(
-                    onPressed: () => Navigator.of(ctx)
-                        .pop((titleCtrl.text.trim(), selected)),
+                    onPressed: () => Navigator.of(
+                      ctx,
+                    ).pop((titleCtrl.text.trim(), selected)),
                     child: const Text('Create'),
                   ),
                 ],

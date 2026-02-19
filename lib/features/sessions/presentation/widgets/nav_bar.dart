@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:tenk/ui/ui_tokens.dart';
 
 class NavBar extends StatelessWidget {
+  /// 0 = no selection
+  /// 1..N = selected tab (1-based)
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final List<NavigationDestination> destinations;
@@ -19,15 +21,19 @@ class NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    final borderColor =
-    cs.outlineVariant.withValues(alpha: UiTokens.glassBorderOpacity);
-    final surfaceColor =
-    cs.surface.withValues(alpha: UiTokens.glassSurfaceOpacity);
-
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(UiTokens.navRadius),
-      side: BorderSide(color: borderColor, width: UiTokens.glassBorderWidth),
+    final borderColor = cs.outlineVariant.withValues(
+      alpha: UiTokens.glassBorderOpacity,
     );
+    final surfaceColor = cs.surface.withValues(
+      alpha: UiTokens.glassSurfaceOpacity,
+    );
+
+    final radius = BorderRadius.circular(UiTokens.navRadius);
+
+    final hasSelection = selectedIndex > 0;
+    final materialSelected = hasSelection
+        ? (selectedIndex - 1).clamp(0, destinations.length - 1)
+        : 0;
 
     return SafeArea(
       top: false,
@@ -37,43 +43,42 @@ class NavBar extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: UiTokens.navMaxWidth),
-            child: DecoratedBox(
-              // Outer: pill-shaped shadow, not clipped
-              decoration: ShapeDecoration(
-                shape: shape,
-                shadows: [
-                  // down
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.10),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
-                  // soft shade above
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.14),
                     blurRadius: 30,
-                    spreadRadius: -58,
+                    spreadRadius: -18,
                     offset: const Offset(0, -10),
                   ),
                 ],
               ),
-              child: ClipPath(
-                // Clip exactly to the same pill shape
-                clipper: ShapeBorderClipper(shape: shape),
+              child: ClipRRect(
+                borderRadius: radius,
                 child: BackdropFilter(
                   filter: ImageFilter.blur(
                     sigmaX: UiTokens.glassBlurSigma,
                     sigmaY: UiTokens.glassBlurSigma,
                   ),
                   child: DecoratedBox(
-                    // Inner: glass fill (ONLY gradient, no color)
-                    decoration: ShapeDecoration(
-                      shape: shape,
+                    decoration: BoxDecoration(
+                      borderRadius: radius,
+                      border: Border.all(
+                        color: borderColor,
+                        width: UiTokens.glassBorderWidth,
+                      ),
+                      color: surfaceColor.withValues(alpha: 0.28),
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          // base glass tint
                           surfaceColor.withValues(alpha: 0.28),
                           Colors.white.withValues(alpha: 0.10),
                           Colors.black.withValues(alpha: 0.03),
@@ -85,14 +90,19 @@ class NavBar extends StatelessWidget {
                         height: UiTokens.navHeight,
                         backgroundColor: Colors.transparent,
                         elevation: 0,
-                        indicatorColor: cs.primary.withValues(alpha: 0.16),
+                        indicatorColor: hasSelection
+                            ? cs.primary.withValues(alpha: 0.16)
+                            : Colors.transparent,
                         labelTextStyle: WidgetStatePropertyAll(
                           Theme.of(context).textTheme.labelMedium,
                         ),
                       ),
                       child: NavigationBar(
-                        selectedIndex: selectedIndex,
-                        onDestinationSelected: onDestinationSelected,
+                        selectedIndex: materialSelected,
+                        onDestinationSelected: (i) {
+                          // Convert back to 1-based for the app layer.
+                          onDestinationSelected(i + 1);
+                        },
                         destinations: destinations,
                       ),
                     ),
