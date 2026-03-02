@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 
 import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
-import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
+import 'package:tenk/features/timer/presentation/widgets/timer_dashboard_control.dart';
+
+import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/ui/progress_bar.dart';
 
 const activityPalette = [
@@ -50,6 +53,7 @@ class DashboardScreen extends StatelessWidget {
               final total = c.totalMinutesAllTime(act.id);
 
               return _ActivityCard(
+                activityId: act.id,
                 title: act.title,
                 totalMinutes: total,
                 progressColor: color,
@@ -64,15 +68,18 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
                 onStart: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ActivityDetailsScreen(
-                        activityId: act.id,
-                        autoStart: true,
-                      ),
-                    ),
-                  );
+                  context.read<TimerController>().start(activityId: act.id);
                 },
+                // onStart: () {
+                //   Navigator.of(context).push(
+                //     MaterialPageRoute<void>(
+                //       builder: (_) => ActivityDetailsScreen(
+                //         activityId: act.id,
+                //         autoStart: true,
+                //       ),
+                //     ),
+                //   );
+                // },
               );
             },
           ),
@@ -187,6 +194,7 @@ class DashboardScreen extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
+  final String activityId;
   final String title;
   final Color progressColor;
   final VoidCallback? onTap;
@@ -194,6 +202,8 @@ class _ActivityCard extends StatelessWidget {
   final int totalMinutes;
 
   const _ActivityCard({
+    super.key,
+    required this.activityId,
     required this.title,
     required this.progressColor,
     this.onTap,
@@ -224,13 +234,19 @@ class _ActivityCard extends StatelessWidget {
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: progressColor,
-                    foregroundColor: Colors.white,
+                child: Theme(
+                  // Use the same visual style as the old Start button.
+                  data: theme.copyWith(
+                    filledButtonTheme: FilledButtonThemeData(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: progressColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
                   ),
-                  onPressed: onStart,
-                  child: const Text('Start'),
+                  child: TimerDashboardControl(
+                    activityId: activityId,
+                  ),
                 ),
               ),
             ],
