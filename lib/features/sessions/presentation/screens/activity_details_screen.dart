@@ -15,6 +15,7 @@ import 'package:tenk/features/sessions/presentation/widgets/session_list.dart';
 
 import 'package:tenk/ui/progress_bar.dart';
 import 'package:tenk/ui/nav_bar.dart';
+import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
 
 enum _ActivityMenuAction { rename, changeColor, delete }
 
@@ -68,11 +69,12 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final c = context.read<SessionsController>();
 
-        if (!_didAutoStart && !c.isRunning && c.elapsedSeconds == 0) {
+        final t = context.read<TimerController>();
+
+        if (!_didAutoStart && !t.isRunning && t.elapsedSeconds == 0) {
           _didAutoStart = true;
-          c.startTimer();
+          t.start(activityId: widget.activityId);
         }
       });
     }
@@ -100,12 +102,14 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
     context.watch<ActivitiesController>();
+    final timer = context.watch<TimerController>();
     final title = _titleFromContext(context);
     final accent = _accentFromContext(context);
     final themed = _activityTheme(context, accent);
     final entries = c.entries
         .where((e) => e.activityId == widget.activityId)
         .toList();
+
 
     return Theme(
       data: themed,
@@ -172,7 +176,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Timer: ${_formatElapsed(c.elapsedSeconds)}',
+                      'Timer: ${_formatElapsed(timer.elapsedSeconds)}',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
@@ -180,17 +184,17 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       children: [
                         Expanded(
                           child: FilledButton(
-                            onPressed: c.isRunning
+                            onPressed: timer.isRunning
                                 ? null
-                                : () => c.startTimer(),
+                                : () => context.read<TimerController>().start(activityId: widget.activityId),
                             child: const Text('Start'),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: FilledButton(
-                            onPressed: c.isRunning
-                                ? () => c.pauseTimer()
+                            onPressed: timer.isRunning
+                                ? () => context.read<TimerController>().pause()
                                 : null,
                             child: const Text('Pause'),
                           ),
@@ -198,39 +202,50 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: FilledButton(
-                            onPressed: c.elapsedSeconds == 0
-                                ? null
-                                : () async {
-                                    final sessions = context
-                                        .read<SessionsController>();
+                            onPressed: () async {
+                              final timer = context.read<TimerController>();
+                              final sessions = context.read<SessionsController>();
 
-                                    sessions.pauseTimer();
+                              if (timer.elapsedSeconds == 0) return;
 
-                                    final now = DateTime.now();
-                                    final initialEnd = now;
-                                    final initialStart = initialEnd.subtract(
-                                      Duration(
-                                        seconds: sessions.elapsedSeconds,
-                                      ),
-                                    );
+                              // Freeze the UI timer while the dialog is open.
+                              timer.pause();
 
-                                    final result = await StopSessionDialog.open(
-                                      context,
-                                      initialStart: initialStart,
-                                      initialEnd: initialEnd,
-                                    );
+                              final now = DateTime.now();
+                              final initialEnd = now;
+                              final initialStart =
+                              initialEnd.subtract(Duration(seconds: timer.elapsedSeconds));
 
-                                    if (!context.mounted || result == null) {
-                                      return;
-                                    }
+                              final result = await StopSessionDialog.open(
+                                context,
+                                initialStart: initialStart,
+                                initialEnd: initialEnd,
+                              );
 
-                                    await sessions.stopAndSave(
-                                      activityId: widget.activityId,
-                                      note: result.note,
-                                      startedAt: result.startedAt,
-                                      finishedAt: result.finishedAt,
-                                    );
-                                  },
+                              if (!context.mounted) return;
+
+                              if (result == null) {
+                                // User cancelled: resume the timer.
+                                timer.start(activityId: widget.activityId);
+                                return;
+                              }
+
+                              final fixed = timer.stop(
+                                startedAt: result.startedAt,
+                                finishedAt: result.finishedAt,
+                              );
+
+                              timer.reset(); // Clears activeActivityId too.
+
+                              if (fixed == null) return;
+
+                              await sessions.addTimedEntry(
+                                activityId: widget.activityId,
+                                note: result.note,
+                                startedAt: fixed.start,
+                                finishedAt: fixed.end,
+                              );
+                            },
                             child: const Text('Stop'),
                           ),
                         ),

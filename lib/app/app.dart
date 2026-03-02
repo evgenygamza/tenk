@@ -1,3 +1,4 @@
+// app/app.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,8 @@ import 'package:tenk/features/activities/presentation/state/activities_controlle
 import 'package:tenk/features/sessions/data/repositories/sessions_repository_impl.dart';
 import 'package:tenk/features/sessions/data/sources/sessions_local_data_source.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+
+import 'package:tenk/features/timer/presentation/state/timer_controller.dart'; // Timer state lives here
 
 import 'package:tenk/app/tabs_shell.dart';
 
@@ -23,6 +26,7 @@ class App extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => TimerController()),
         ChangeNotifierProvider(create: (_) => SessionsController(sessionsRepo)),
         ChangeNotifierProvider(
           create: (_) => ActivitiesController(activitiesRepo),
