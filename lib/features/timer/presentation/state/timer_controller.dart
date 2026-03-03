@@ -1,23 +1,52 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
+import 'package:tenk/features/timer/presentation/state/timer_storage.dart';
+
 class TimerController extends ChangeNotifier {
+  final TimerStorage _storage;
+
   Timer? _ticker;
 
   // One timer state per activityId.
   final Map<String, _TimerState> _timers = {};
 
-  // Starts (or resumes) a timer for a specific activity.
+  TimerController(this._storage);
+
+  /// Restores persisted timer state. Call once on app start.
+  Future<void> init() async {
+    final saved = await _storage.load();
+    _timers
+      ..clear()
+      ..addEntries(
+        saved.entries.map((e) {
+          final snap = e.value;
+          return MapEntry(
+            e.key,
+            _TimerState(
+              runningSince: snap.runningSinceMs == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(snap.runningSinceMs!),
+              accumulatedSeconds: snap.accumulatedSeconds,
+            ),
+          );
+        }),
+      );
+
+    _ensureTickerIfNeeded();
+    notifyListeners();
+  }
+
   void start({required String activityId}) {
     final s = _timers.putIfAbsent(activityId, () => _TimerState());
     if (s.runningSince != null) return;
 
     s.runningSince = DateTime.now();
-    _ensureTicker();
+    _ensureTickerIfNeeded();
+    _persist();
     notifyListeners();
   }
 
-  // Pauses a timer for a specific activity.
   void pause({required String activityId}) {
     final s = _timers[activityId];
     if (s == null) return;
@@ -30,10 +59,10 @@ class TimerController extends ChangeNotifier {
 
     s.runningSince = null;
     _stopTickerIfIdle();
+    _persist();
     notifyListeners();
   }
 
-  // Returns elapsed seconds for a specific activity.
   int elapsedSeconds({required String activityId}) {
     final s = _timers[activityId];
     if (s == null) return 0;
@@ -46,13 +75,10 @@ class TimerController extends ChangeNotifier {
     return base + (diff < 0 ? 0 : diff);
   }
 
-  // True if this activity timer is currently running (not paused).
   bool isRunning({required String activityId}) {
     return _timers[activityId]?.runningSince != null;
   }
 
-  // Stops the timer for the given activity and returns fixed timestamps for saving.
-  // Returns null if duration <= 0 or if there is no timer state for this activity.
   ({DateTime start, DateTime end, int seconds})? stop({
     required String activityId,
     DateTime? startedAt,
@@ -67,23 +93,26 @@ class TimerController extends ChangeNotifier {
     final start = startedAt ?? end.subtract(Duration(seconds: totalSeconds));
     final diff = end.difference(start).inSeconds;
 
-    // Remove timer state for this activity.
     _timers.remove(activityId);
     _stopTickerIfIdle();
+    _persist();
     notifyListeners();
 
     if (diff <= 0) return null;
     return (start: start, end: end, seconds: diff);
   }
 
-  // Clears the timer state for a specific activity without saving.
   void reset({required String activityId}) {
     _timers.remove(activityId);
     _stopTickerIfIdle();
+    _persist();
     notifyListeners();
   }
 
-  void _ensureTicker() {
+  void _ensureTickerIfNeeded() {
+    final anyRunning = _timers.values.any((s) => s.runningSince != null);
+    if (!anyRunning) return;
+
     _ticker ??=
         Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
   }
@@ -108,6 +137,23 @@ class TimerController extends ChangeNotifier {
     return base + (diff < 0 ? 0 : diff);
   }
 
+  void _persist() {
+    // Persist only on state transitions (start/pause/stop/reset), not every tick.
+    final snapshot = _timers.map((activityId, s) {
+      return MapEntry(
+        activityId,
+        TimerSnapshot(
+          runningSinceMs: s.runningSince?.millisecondsSinceEpoch,
+          accumulatedSeconds: s.accumulatedSeconds,
+        ),
+      );
+    });
+
+    // Fire-and-forget is fine here; persistence is best-effort.
+    // If you prefer, make these methods async and await _storage.save(...).
+    unawaited(_storage.save(snapshot));
+  }
+
   @override
   void dispose() {
     _ticker?.cancel();
@@ -117,5 +163,10 @@ class TimerController extends ChangeNotifier {
 
 class _TimerState {
   DateTime? runningSince;
-  int accumulatedSeconds = 0;
+  int accumulatedSeconds;
+
+  _TimerState({
+    this.runningSince,
+    this.accumulatedSeconds = 0,
+  });
 }
