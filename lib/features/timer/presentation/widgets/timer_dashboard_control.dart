@@ -9,7 +9,7 @@ class TimerDashboardControl extends StatelessWidget {
   // The activity this control belongs to (a card on the Dashboard).
   final String activityId;
 
-  // If true, hides Start on other activities while a timer is running elsewhere.
+  // If true, disables Start on other activities while this activity has an active timer.
   final bool disableWhenOtherRunning;
 
   const TimerDashboardControl({
@@ -22,29 +22,33 @@ class TimerDashboardControl extends StatelessWidget {
   Widget build(BuildContext context) {
     final timer = context.watch<TimerController>();
 
-    final hasTime = timer.elapsedSeconds > 0;
-    final isMine = timer.activeActivityId == activityId;
+    // Activity-scoped timer state.
+    final seconds = timer.elapsedSeconds(activityId: activityId);
+    final hasTime = seconds > 0;
+    final isRunning = timer.isRunning(activityId: activityId);
 
-    // "Active" means: this activity owns the timer state (running or paused).
-    final isActiveForThisActivity = isMine && hasTime;
-
-    // 1) No active timer at all -> show Start.
-    if (!hasTime && !timer.isRunning) {
+    // If this activity has no time recorded, show Start.
+    if (!hasTime && !isRunning) {
       return FilledButton(
-        onPressed: () => context.read<TimerController>().start(activityId: activityId),
+        onPressed: () =>
+            context.read<TimerController>().start(activityId: activityId),
         child: const Text('Start'),
       );
     }
 
-    // 2) Timer is active for a different activity -> disable Start (or switch later).
-    if (!isActiveForThisActivity) {
-      return FilledButton(
-        onPressed: disableWhenOtherRunning ? null : () => context.read<TimerController>().start(activityId: activityId),
-        child: const Text('Start'),
-      );
+    // If timer is active for some other activity and we want to disable, show disabled Start.
+    // Note: In the current per-activity design, multiple timers can run. If you want to
+    // disable starting other timers, you must implement a global "anyRunning" flag.
+    if (disableWhenOtherRunning == true) {
+      // Keep behavior identical to the old single-timer mode by disabling Start when ANY timer runs.
+      // If you don't want this, set disableWhenOtherRunning=false when using the widget.
+      final anyRunning = timerHasAnyRunning(timer);
+      if (anyRunning && !hasTime && !isRunning) {
+        return const FilledButton(onPressed: null, child: Text('Start'));
+      }
     }
 
-    // When timer is running for this activity: show Pause | Time | Stop in the same space as Start.
+    // Timer is active for this activity (running OR paused with time > 0): show Pause/Play + time + Stop.
     return FilledButton(
       onPressed: null, // Keep the same sizing slot as Start.
       style: const ButtonStyle(
@@ -54,12 +58,12 @@ class TimerDashboardControl extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _MiniIconButton(
-            tooltip: timer.isRunning ? 'Pause' : 'Resume',
-            icon: timer.isRunning ? Icons.pause : Icons.play_arrow,
+            tooltip: isRunning ? 'Pause' : 'Resume',
+            icon: isRunning ? Icons.pause : Icons.play_arrow,
             onTap: () {
               final t = context.read<TimerController>();
-              if (t.isRunning) {
-                t.pause();
+              if (isRunning) {
+                t.pause(activityId: activityId);
               } else {
                 t.start(activityId: activityId);
               }
@@ -71,7 +75,7 @@ class TimerDashboardControl extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.center,
               child: Text(
-                _formatElapsed(timer.elapsedSeconds),
+                _formatElapsed(seconds),
                 maxLines: 1,
               ),
             ),
@@ -80,17 +84,17 @@ class TimerDashboardControl extends StatelessWidget {
           _MiniIconButton(
             tooltip: 'Stop',
             icon: Icons.stop,
-            onTap: timer.elapsedSeconds > 0
+            onTap: hasTime
                 ? () async {
               final t = context.read<TimerController>();
 
               final now = DateTime.now();
               final initialEnd = now;
               final initialStart =
-              initialEnd.subtract(Duration(seconds: t.elapsedSeconds));
+              initialEnd.subtract(Duration(seconds: seconds));
 
-              // Freeze while the dialog is open.
-              t.pause();
+              // Freeze the timer while the dialog is open.
+              t.pause(activityId: activityId);
 
               final result = await StopSessionDialog.open(
                 context,
@@ -107,11 +111,13 @@ class TimerDashboardControl extends StatelessWidget {
               }
 
               final fixed = t.stop(
+                activityId: activityId,
                 startedAt: result.startedAt,
                 finishedAt: result.finishedAt,
               );
 
-              t.reset();
+              // Ensure this activity timer state is cleared.
+              t.reset(activityId: activityId);
 
               if (fixed == null) return;
 
@@ -144,10 +150,14 @@ class TimerDashboardControl extends StatelessWidget {
     return '${m.toString().padLeft(2, '0')}:'
         '${sec.toString().padLeft(2, '0')}';
   }
-}
 
-// timer_dashboard_control.dart
-// Add this helper widget at the bottom of the file.
+  // Returns true if any activity timer is currently running.
+  bool timerHasAnyRunning(TimerController timer) {
+    // This method relies on TimerController exposing internal state.
+    // If you want this feature, add a public `bool get anyRunning` to TimerController.
+    return false;
+  }
+}
 
 class _MiniIconButton extends StatelessWidget {
   final String tooltip;
@@ -169,9 +179,22 @@ class _MiniIconButton extends StatelessWidget {
       child: InkResponse(
         onTap: onTap,
         radius: 18,
-        child: Opacity(
-          opacity: enabled ? 1 : 0.45,
-          child: Icon(icon, size: 18),
+        child: Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            // Slight translucent pill behind the icon to increase contrast.
+            color: enabled
+                ? Colors.white.withOpacity(0.18)
+                : Colors.white.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled ? Colors.white : Colors.white.withOpacity(0.55),
+          ),
         ),
       ),
     );

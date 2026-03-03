@@ -72,7 +72,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
         final t = context.read<TimerController>();
 
-        if (!_didAutoStart && !t.isRunning && t.elapsedSeconds == 0) {
+        if (!_didAutoStart &&
+            !t.isRunning(activityId: widget.activityId) &&
+            t.elapsedSeconds(activityId: widget.activityId) == 0) {
           _didAutoStart = true;
           t.start(activityId: widget.activityId);
         }
@@ -102,13 +104,16 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
   Widget build(BuildContext context) {
     final c = context.watch<SessionsController>();
     context.watch<ActivitiesController>();
-    final timer = context.watch<TimerController>();
     final title = _titleFromContext(context);
     final accent = _accentFromContext(context);
     final themed = _activityTheme(context, accent);
     final entries = c.entries
         .where((e) => e.activityId == widget.activityId)
         .toList();
+    final timer = context.watch<TimerController>();
+    final seconds = timer.elapsedSeconds(activityId: widget.activityId);
+    final isRunning = timer.isRunning(activityId: widget.activityId);
+
 
 
     return Theme(
@@ -164,8 +169,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'All time: ${_formatHoursMinutes(c.totalMinutesAllTime(widget.activityId))}',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      'Timer: ${_formatElapsed(seconds)}',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     ProgressBar(
@@ -176,7 +181,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Timer: ${_formatElapsed(timer.elapsedSeconds)}',
+                      'Timer: ${_formatElapsed(seconds)}',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
@@ -184,17 +189,21 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       children: [
                         Expanded(
                           child: FilledButton(
-                            onPressed: timer.isRunning
+                            onPressed: isRunning
                                 ? null
-                                : () => context.read<TimerController>().start(activityId: widget.activityId),
+                                : () => context
+                                .read<TimerController>()
+                                .start(activityId: widget.activityId),
                             child: const Text('Start'),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: FilledButton(
-                            onPressed: timer.isRunning
-                                ? () => context.read<TimerController>().pause()
+                            onPressed: isRunning
+                                ? () => context
+                                .read<TimerController>()
+                                .pause(activityId: widget.activityId)
                                 : null,
                             child: const Text('Pause'),
                           ),
@@ -206,15 +215,15 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                               final timer = context.read<TimerController>();
                               final sessions = context.read<SessionsController>();
 
-                              if (timer.elapsedSeconds == 0) return;
+                              final seconds = timer.elapsedSeconds(activityId: widget.activityId);
+                              if (seconds == 0) return;
 
-                              // Freeze the UI timer while the dialog is open.
-                              timer.pause();
+                              // Freeze while the dialog is open.
+                              timer.pause(activityId: widget.activityId);
 
                               final now = DateTime.now();
                               final initialEnd = now;
-                              final initialStart =
-                              initialEnd.subtract(Duration(seconds: timer.elapsedSeconds));
+                              final initialStart = initialEnd.subtract(Duration(seconds: seconds));
 
                               final result = await StopSessionDialog.open(
                                 context,
@@ -231,11 +240,12 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                               }
 
                               final fixed = timer.stop(
+                                activityId: widget.activityId,
                                 startedAt: result.startedAt,
                                 finishedAt: result.finishedAt,
                               );
 
-                              timer.reset(); // Clears activeActivityId too.
+                              timer.reset(activityId: widget.activityId);
 
                               if (fixed == null) return;
 

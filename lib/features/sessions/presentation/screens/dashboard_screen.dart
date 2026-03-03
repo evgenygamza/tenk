@@ -70,16 +70,6 @@ class DashboardScreen extends StatelessWidget {
                 onStart: () {
                   context.read<TimerController>().start(activityId: act.id);
                 },
-                // onStart: () {
-                //   Navigator.of(context).push(
-                //     MaterialPageRoute<void>(
-                //       builder: (_) => ActivityDetailsScreen(
-                //         activityId: act.id,
-                //         autoStart: true,
-                //       ),
-                //     ),
-                //   );
-                // },
               );
             },
           ),
@@ -91,105 +81,114 @@ class DashboardScreen extends StatelessWidget {
   // ---------- ADD ACTIVITY DIALOG ----------
   Future<void> _openAddActivityDialog(BuildContext context) async {
     final activities = context.read<ActivitiesController>();
-    final titleCtrl = TextEditingController();
-    int selected = 0;
 
-    try {
-      final result = await showDialog<(String, int)>(
-        context: context,
-        builder: (ctx) {
-          return StatefulBuilder(
-            builder: (ctx, setState) {
-              Widget colorDot(int i) {
-                final color = activityPalette[i];
-                final isSelected = i == selected;
+    final result = await showDialog<(String, int)>(
+      context: context,
+      builder: (ctx) {
+        final titleCtrl = TextEditingController();
+        int selected = 0;
+        String? titleError;
 
-                return InkWell(
-                  onTap: () => setState(() => selected = i),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(ctx).colorScheme.onSurface
-                            : Colors.transparent,
-                        width: 2,
-                      ),
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            Widget colorDot(int i) {
+              final color = activityPalette[i];
+              final isSelected = i == selected;
+
+              return InkWell(
+                onTap: () => setState(() => selected = i),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(ctx).colorScheme.onSurface
+                          : Colors.transparent,
+                      width: 2,
                     ),
-                    child: isSelected
-                        ? const Icon(Icons.check, size: 18, color: Colors.white)
-                        : null,
                   ),
-                );
-              }
-
-              return AlertDialog(
-                title: const Text('New activity'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleCtrl,
-                      autofocus: true,
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        hintText: 'e.g. Guitar',
-                      ),
-                      onSubmitted: (_) => Navigator.of(
-                        ctx,
-                      ).pop((titleCtrl.text.trim(), selected)),
-                    ),
-                    const SizedBox(height: 14),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Color',
-                        style: Theme.of(ctx).textTheme.labelLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: List.generate(activityPalette.length, colorDot),
-                    ),
-                  ],
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 18, color: Colors.white)
+                      : null,
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(null),
-                    child: const Text('Cancel'),
+              );
+            }
+
+            void submit() {
+              final title = titleCtrl.text.trim();
+              if (title.isEmpty) {
+                setState(() => titleError = 'Title is required');
+                return;
+              }
+              Navigator.of(ctx).pop((title, selected));
+            }
+
+            return AlertDialog(
+              title: const Text('New activity'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'e.g. Guitar',
+                      errorText: titleError,
+                    ),
+                    onChanged: (_) {
+                      if (titleError != null) {
+                        setState(() => titleError = null);
+                      }
+                    },
+                    onSubmitted: (_) => submit(),
                   ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(
-                      ctx,
-                    ).pop((titleCtrl.text.trim(), selected)),
-                    child: const Text('Create'),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Color',
+                      style: Theme.of(ctx).textTheme.labelLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: List.generate(activityPalette.length, colorDot),
                   ),
                 ],
-              );
-            },
-          );
-        },
-      );
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: submit,
+                  child: const Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
 
-      if (result == null) return;
+    if (result == null) return;
 
-      final title = result.$1.trim();
-      if (title.isEmpty) return;
+    final title = result.$1.trim();
+    if (title.isEmpty) return;
 
-      final id = DateTime.now().microsecondsSinceEpoch.toString();
-      await activities.add(
-        Activity(id: id, title: title, colorIndex: result.$2),
-      );
-    } finally {
-      titleCtrl.dispose();
-    }
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    await activities.add(
+      Activity(id: id, title: title, colorIndex: result.$2),
+    );
   }
 }
 
@@ -235,7 +234,6 @@ class _ActivityCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: Theme(
-                  // Use the same visual style as the old Start button.
                   data: theme.copyWith(
                     filledButtonTheme: FilledButtonThemeData(
                       style: FilledButton.styleFrom(
