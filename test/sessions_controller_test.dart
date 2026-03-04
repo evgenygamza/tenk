@@ -107,7 +107,7 @@ void main() {
     final start = DateTime(2026, 2, 16, 10, 0);
     final end = DateTime(2026, 2, 16, 10, 45);
 
-    await c.stopAndSave(
+    await c.addTimedEntry(
       activityId: 'guitar',
       startedAt: start,
       finishedAt: end,

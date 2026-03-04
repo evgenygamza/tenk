@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 
 import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
-import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
+import 'package:tenk/features/timer/presentation/widgets/timer_dashboard_control.dart';
+
+import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/ui/progress_bar.dart';
 
 const activityPalette = [
@@ -50,6 +53,7 @@ class DashboardScreen extends StatelessWidget {
               final total = c.totalMinutesAllTime(act.id);
 
               return _ActivityCard(
+                activityId: act.id,
                 title: act.title,
                 totalMinutes: total,
                 progressColor: color,
@@ -64,14 +68,7 @@ class DashboardScreen extends StatelessWidget {
                   );
                 },
                 onStart: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ActivityDetailsScreen(
-                        activityId: act.id,
-                        autoStart: true,
-                      ),
-                    ),
-                  );
+                  context.read<TimerController>().start(activityId: act.id);
                 },
               );
             },
@@ -84,109 +81,114 @@ class DashboardScreen extends StatelessWidget {
   // ---------- ADD ACTIVITY DIALOG ----------
   Future<void> _openAddActivityDialog(BuildContext context) async {
     final activities = context.read<ActivitiesController>();
-    final titleCtrl = TextEditingController();
-    int selected = 0;
 
-    try {
-      final result = await showDialog<(String, int)>(
-        context: context,
-        builder: (ctx) {
-          return StatefulBuilder(
-            builder: (ctx, setState) {
-              Widget colorDot(int i) {
-                final color = activityPalette[i];
-                final isSelected = i == selected;
+    final result = await showDialog<(String, int)>(
+      context: context,
+      builder: (ctx) {
+        final titleCtrl = TextEditingController();
+        int selected = 0;
+        String? titleError;
 
-                return InkWell(
-                  onTap: () => setState(() => selected = i),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? Theme.of(ctx).colorScheme.onSurface
-                            : Colors.transparent,
-                        width: 2,
-                      ),
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            Widget colorDot(int i) {
+              final color = activityPalette[i];
+              final isSelected = i == selected;
+
+              return InkWell(
+                onTap: () => setState(() => selected = i),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(ctx).colorScheme.onSurface
+                          : Colors.transparent,
+                      width: 2,
                     ),
-                    child: isSelected
-                        ? const Icon(Icons.check, size: 18, color: Colors.white)
-                        : null,
                   ),
-                );
-              }
-
-              return AlertDialog(
-                title: const Text('New activity'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleCtrl,
-                      autofocus: true,
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        hintText: 'e.g. Guitar',
-                      ),
-                      onSubmitted: (_) => Navigator.of(
-                        ctx,
-                      ).pop((titleCtrl.text.trim(), selected)),
-                    ),
-                    const SizedBox(height: 14),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Color',
-                        style: Theme.of(ctx).textTheme.labelLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: List.generate(activityPalette.length, colorDot),
-                    ),
-                  ],
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 18, color: Colors.white)
+                      : null,
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(null),
-                    child: const Text('Cancel'),
+              );
+            }
+
+            void submit() {
+              final title = titleCtrl.text.trim();
+              if (title.isEmpty) {
+                setState(() => titleError = 'Title is required');
+                return;
+              }
+              Navigator.of(ctx).pop((title, selected));
+            }
+
+            return AlertDialog(
+              title: const Text('New activity'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'e.g. Guitar',
+                      errorText: titleError,
+                    ),
+                    onChanged: (_) {
+                      if (titleError != null) {
+                        setState(() => titleError = null);
+                      }
+                    },
+                    onSubmitted: (_) => submit(),
                   ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(
-                      ctx,
-                    ).pop((titleCtrl.text.trim(), selected)),
-                    child: const Text('Create'),
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Color',
+                      style: Theme.of(ctx).textTheme.labelLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: List.generate(activityPalette.length, colorDot),
                   ),
                 ],
-              );
-            },
-          );
-        },
-      );
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(onPressed: submit, child: const Text('Create')),
+              ],
+            );
+          },
+        );
+      },
+    );
 
-      if (result == null) return;
+    if (result == null) return;
 
-      final title = result.$1.trim();
-      if (title.isEmpty) return;
+    final title = result.$1.trim();
+    if (title.isEmpty) return;
 
-      final id = DateTime.now().microsecondsSinceEpoch.toString();
-      await activities.add(
-        Activity(id: id, title: title, colorIndex: result.$2),
-      );
-    } finally {
-      titleCtrl.dispose();
-    }
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    await activities.add(Activity(id: id, title: title, colorIndex: result.$2));
   }
 }
 
 class _ActivityCard extends StatelessWidget {
+  final String activityId;
   final String title;
   final Color progressColor;
   final VoidCallback? onTap;
@@ -194,6 +196,7 @@ class _ActivityCard extends StatelessWidget {
   final int totalMinutes;
 
   const _ActivityCard({
+    required this.activityId,
     required this.title,
     required this.progressColor,
     this.onTap,
@@ -224,13 +227,16 @@ class _ActivityCard extends StatelessWidget {
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: progressColor,
-                    foregroundColor: Colors.white,
+                child: Theme(
+                  data: theme.copyWith(
+                    filledButtonTheme: FilledButtonThemeData(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: progressColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
                   ),
-                  onPressed: onStart,
-                  child: const Text('Start'),
+                  child: TimerDashboardControl(activityId: activityId),
                 ),
               ),
             ],

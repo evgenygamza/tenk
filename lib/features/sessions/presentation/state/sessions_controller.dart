@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 import 'package:tenk/features/sessions/domain/repositories/sessions_repository.dart';
 
@@ -10,10 +8,6 @@ class SessionsController extends ChangeNotifier {
   final SessionsRepository _repo;
 
   List<SessionEntry> entries = [];
-
-  Timer? _timer;
-  bool isRunning = false;
-  int elapsedSeconds = 0;
 
   SessionsController(this._repo) {
     _load();
@@ -55,6 +49,32 @@ class SessionsController extends ChangeNotifier {
     await _repo.saveEntries(entries);
   }
 
+  /// Creates a session entry from explicit start/end timestamps.
+  /// Duration is rounded up to minutes and clamped to at least 1 minute.
+  Future<void> addTimedEntry({
+    required String activityId,
+    required DateTime startedAt,
+    required DateTime finishedAt,
+    String? note,
+  }) async {
+    final diffSeconds = finishedAt.difference(startedAt).inSeconds;
+    if (diffSeconds <= 0) return;
+
+    final minutes = max(1, (diffSeconds / 60).ceil());
+
+    final entry = SessionEntry(
+      id: _newId(),
+      activityId: activityId,
+      startedAt: startedAt,
+      minutes: minutes,
+      note: note,
+    );
+
+    entries = [entry, ...entries];
+    notifyListeners();
+    await _repo.saveEntries(entries);
+  }
+
   Future<void> updateEntry(SessionEntry updated) async {
     final idx = entries.indexWhere((e) => e.id == updated.id);
     if (idx == -1) return;
@@ -73,85 +93,15 @@ class SessionsController extends ChangeNotifier {
     await _repo.saveEntries(entries);
   }
 
-  void startTimer() {
-    if (isRunning) return;
-
-    isRunning = true;
-
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      elapsedSeconds += 1;
-      notifyListeners();
-    });
-
-    notifyListeners();
-  }
-
-  void pauseTimer() {
-    if (!isRunning) return;
-
-    isRunning = false;
-    _timer?.cancel();
-    _timer = null;
-
-    notifyListeners();
-  }
-
-  Future<void> stopAndSave({
-    required String activityId,
-    String? note,
-    DateTime? startedAt,
-    DateTime? finishedAt,
-  }) async {
-    // Stop ticking immediately (if it was running)
-    pauseTimer();
-
-    final end = finishedAt ?? DateTime.now();
-    final start = startedAt ?? end.subtract(Duration(seconds: elapsedSeconds));
-
-    final diffSeconds = end.difference(start).inSeconds;
-    if (diffSeconds <= 0) return;
-
-    final minutes = max(1, diffSeconds ~/ 60);
-
-    final entry = SessionEntry(
-      id: _newId(),
-      activityId: activityId,
-      startedAt: start,
-      minutes: minutes,
-      note: note,
-    );
-
-    entries = [entry, ...entries];
-    elapsedSeconds = 0;
-
-    notifyListeners();
-    await _repo.saveEntries(entries);
-  }
-
-  void resetTimer() {
-    pauseTimer();
-    elapsedSeconds = 0;
-    notifyListeners();
-  }
-
   Future<void> resetActivity(String activityId) async {
-    pauseTimer();
-    elapsedSeconds = 0;
-
     entries = entries.where((e) => e.activityId != activityId).toList();
     notifyListeners();
-
     await _repo.saveEntries(entries);
   }
 
   Future<void> resetAll() async {
-    pauseTimer();
-    elapsedSeconds = 0;
-
     entries = [];
     notifyListeners();
-
     await _repo.clear();
   }
 
