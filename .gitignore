@@ -43,3 +43,7 @@ coverage/
 
 # FVM Version Cache
 .fvm/
+
+#xcode
+**/*.xcuserstate
+**/*.xcworkspace
