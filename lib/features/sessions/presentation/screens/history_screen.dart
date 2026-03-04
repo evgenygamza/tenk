@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tenk/testing/app_keys.dart';
 
 import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
@@ -31,6 +32,7 @@ class HistoryScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('History')),
       body: SafeArea(
+        key: AppKeys.screenHistory,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: rows.isEmpty

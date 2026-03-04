@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tenk/testing/app_keys.dart';
 
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
@@ -447,14 +448,17 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                 },
                 destinations: const [
                   NavigationDestination(
+                    key: AppKeys.tabDashboard,
                     icon: Icon(Icons.grid_view_rounded),
                     label: 'Home',
                   ),
                   NavigationDestination(
+                    key: AppKeys.tabHistory,
                     icon: Icon(Icons.history),
                     label: 'History',
                   ),
                   NavigationDestination(
+                    key: AppKeys.tabSettings,
                     icon: Icon(Icons.tune_rounded),
                     label: 'Settings',
                   ),
