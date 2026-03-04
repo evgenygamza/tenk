@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    runs-on: macos-latest
+  analyze:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -16,8 +20,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.0"
-          channel: "stable"
-          architecture: x64
+          channel: stable
           cache: true
 
       - name: Install dependencies
@@ -25,6 +28,22 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+
+  test:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.0"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
 
       - name: Test
         run: flutter test
