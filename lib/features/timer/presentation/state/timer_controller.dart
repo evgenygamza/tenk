@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:tenk/features/timer/presentation/state/timer_storage.dart';
 
 class TimerController extends ChangeNotifier {
+  static const int _autoStopSeconds = 24 * 60 * 60;
   final TimerStorage _storage;
 
   Timer? _ticker;
@@ -28,6 +29,10 @@ class TimerController extends ChangeNotifier {
                   ? null
                   : DateTime.fromMillisecondsSinceEpoch(snap.runningSinceMs!),
               accumulatedSeconds: snap.accumulatedSeconds,
+              autoPaused: snap.autoPaused,
+              autoPausedAt: snap.autoPausedAtMs == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(snap.autoPausedAtMs!),
             ),
           );
         }),
@@ -40,6 +45,10 @@ class TimerController extends ChangeNotifier {
   void start({required String activityId}) {
     final s = _timers.putIfAbsent(activityId, () => _TimerState());
     if (s.runningSince != null) return;
+
+    // Clear auto-paused marker when user resumes manually.
+    s.autoPaused = false;
+    s.autoPausedAt = null;
 
     s.runningSince = DateTime.now();
     _ensureTickerIfNeeded();
@@ -63,6 +72,26 @@ class TimerController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Expose auto-paused state for UI.
+  bool isAutoPaused({required String activityId}) {
+    return _timers[activityId]?.autoPaused ?? false;
+  }
+
+  DateTime? autoPausedAt({required String activityId}) {
+    return _timers[activityId]?.autoPausedAt;
+  }
+
+  // Optional: allow UI to dismiss the banner without stopping.
+  void clearAutoPausedFlag({required String activityId}) {
+    final s = _timers[activityId];
+    if (s == null) return;
+
+    s.autoPaused = false;
+    s.autoPausedAt = null;
+    _persist();
+    notifyListeners();
+  }
+
   int elapsedSeconds({required String activityId}) {
     final s = _timers[activityId];
     if (s == null) return 0;
@@ -72,7 +101,24 @@ class TimerController extends ChangeNotifier {
     if (since == null) return base;
 
     final diff = DateTime.now().difference(since).inSeconds;
-    return base + (diff < 0 ? 0 : diff);
+    final live = diff < 0 ? 0 : diff;
+
+    // Auto-pause after 24h to avoid infinite running sessions.
+    if (base + live >= _autoStopSeconds) {
+      s.accumulatedSeconds = _autoStopSeconds;
+      s.runningSince = null;
+
+      s.autoPaused = true;
+      s.autoPausedAt = DateTime.now();
+
+      _stopTickerIfIdle();
+      _persist();
+      notifyListeners();
+
+      return s.accumulatedSeconds;
+    }
+
+    return base + live;
   }
 
   bool isRunning({required String activityId}) {
@@ -113,8 +159,10 @@ class TimerController extends ChangeNotifier {
     final anyRunning = _timers.values.any((s) => s.runningSince != null);
     if (!anyRunning) return;
 
-    _ticker ??=
-        Timer.periodic(const Duration(seconds: 1), (_) => notifyListeners());
+    _ticker ??= Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => notifyListeners(),
+    );
   }
 
   void _stopTickerIfIdle() {
@@ -145,6 +193,8 @@ class TimerController extends ChangeNotifier {
         TimerSnapshot(
           runningSinceMs: s.runningSince?.millisecondsSinceEpoch,
           accumulatedSeconds: s.accumulatedSeconds,
+          autoPaused: s.autoPaused,
+          autoPausedAtMs: s.autoPausedAt?.millisecondsSinceEpoch,
         ),
       );
     });
@@ -165,8 +215,14 @@ class _TimerState {
   DateTime? runningSince;
   int accumulatedSeconds;
 
+  // If set, the session was automatically paused by the system.
+  bool autoPaused;
+  DateTime? autoPausedAt;
+
   _TimerState({
     this.runningSince,
     this.accumulatedSeconds = 0,
+    this.autoPaused = false,
+    this.autoPausedAt,
   });
 }

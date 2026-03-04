@@ -114,8 +114,6 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     final seconds = timer.elapsedSeconds(activityId: widget.activityId);
     final isRunning = timer.isRunning(activityId: widget.activityId);
 
-
-
     return Theme(
       data: themed,
       child: Scaffold(
@@ -179,21 +177,106 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                       ),
                       color: _accentFromContext(context),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Timer: ${_formatElapsed(seconds)}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
                     const SizedBox(height: 12),
+                    // Show auto-pause banner right above the Start/Pause/Stop row.
+                    if (timer.isAutoPaused(activityId: widget.activityId))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Material(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber_rounded),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Auto-paused after 24h. Please review the end time.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    final t = context.read<TimerController>();
+                                    final sessions = context
+                                        .read<SessionsController>();
+
+                                    final secs = t.elapsedSeconds(
+                                      activityId: widget.activityId,
+                                    );
+                                    if (secs == 0) {
+                                      t.clearAutoPausedFlag(
+                                        activityId: widget.activityId,
+                                      );
+                                      return;
+                                    }
+
+                                    final end =
+                                        t.autoPausedAt(
+                                          activityId: widget.activityId,
+                                        ) ??
+                                        DateTime.now();
+                                    final start = end.subtract(
+                                      Duration(seconds: secs),
+                                    );
+
+                                    final result = await StopSessionDialog.open(
+                                      context,
+                                      initialStart: start,
+                                      initialEnd: end,
+                                    );
+
+                                    if (!context.mounted) return;
+
+                                    if (result == null) {
+                                      // Keep it paused; user can review later.
+                                      return;
+                                    }
+
+                                    final fixed = t.stop(
+                                      activityId: widget.activityId,
+                                      startedAt: result.startedAt,
+                                      finishedAt: result.finishedAt,
+                                    );
+
+                                    t.reset(activityId: widget.activityId);
+
+                                    if (fixed == null) return;
+
+                                    await sessions.addTimedEntry(
+                                      activityId: widget.activityId,
+                                      note:
+                                          result.note ??
+                                          'Auto-paused (24h cap)',
+                                      startedAt: fixed.start,
+                                      finishedAt: fixed.end,
+                                    );
+                                  },
+                                  child: const Text('Review'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     Row(
                       children: [
                         Expanded(
                           child: FilledButton(
                             onPressed: isRunning
                                 ? null
-                                : () => context
-                                .read<TimerController>()
-                                .start(activityId: widget.activityId),
+                                : () => context.read<TimerController>().start(
+                                    activityId: widget.activityId,
+                                  ),
                             child: const Text('Start'),
                           ),
                         ),
@@ -201,9 +284,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                         Expanded(
                           child: FilledButton(
                             onPressed: isRunning
-                                ? () => context
-                                .read<TimerController>()
-                                .pause(activityId: widget.activityId)
+                                ? () => context.read<TimerController>().pause(
+                                    activityId: widget.activityId,
+                                  )
                                 : null,
                             child: const Text('Pause'),
                           ),
@@ -213,9 +296,12 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                           child: FilledButton(
                             onPressed: () async {
                               final timer = context.read<TimerController>();
-                              final sessions = context.read<SessionsController>();
+                              final sessions = context
+                                  .read<SessionsController>();
 
-                              final seconds = timer.elapsedSeconds(activityId: widget.activityId);
+                              final seconds = timer.elapsedSeconds(
+                                activityId: widget.activityId,
+                              );
                               if (seconds == 0) return;
 
                               // Freeze while the dialog is open.
@@ -223,7 +309,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
                               final now = DateTime.now();
                               final initialEnd = now;
-                              final initialStart = initialEnd.subtract(Duration(seconds: seconds));
+                              final initialStart = initialEnd.subtract(
+                                Duration(seconds: seconds),
+                              );
 
                               final result = await StopSessionDialog.open(
                                 context,

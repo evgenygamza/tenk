@@ -169,10 +169,7 @@ class DashboardScreen extends StatelessWidget {
                   onPressed: () => Navigator.of(ctx).pop(null),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
-                  onPressed: submit,
-                  child: const Text('Create'),
-                ),
+                FilledButton(onPressed: submit, child: const Text('Create')),
               ],
             );
           },
@@ -186,9 +183,7 @@ class DashboardScreen extends StatelessWidget {
     if (title.isEmpty) return;
 
     final id = DateTime.now().microsecondsSinceEpoch.toString();
-    await activities.add(
-      Activity(id: id, title: title, colorIndex: result.$2),
-    );
+    await activities.add(Activity(id: id, title: title, colorIndex: result.$2));
   }
 }
 
@@ -242,9 +237,7 @@ class _ActivityCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: TimerDashboardControl(
-                    activityId: activityId,
-                  ),
+                  child: TimerDashboardControl(activityId: activityId),
                 ),
               ),
             ],

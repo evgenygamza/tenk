@@ -21,11 +21,10 @@ class TimerDashboardControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timer = context.watch<TimerController>();
-
-    // Activity-scoped timer state.
     final seconds = timer.elapsedSeconds(activityId: activityId);
     final hasTime = seconds > 0;
     final isRunning = timer.isRunning(activityId: activityId);
+    final autoPaused = timer.isAutoPaused(activityId: activityId);
 
     // If this activity has no time recorded, show Start.
     if (!hasTime && !isRunning) {
@@ -58,10 +57,54 @@ class TimerDashboardControl extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _MiniIconButton(
-            tooltip: isRunning ? 'Pause' : 'Resume',
-            icon: isRunning ? Icons.pause : Icons.play_arrow,
-            onTap: () {
+            tooltip: autoPaused ? 'Review' : (isRunning ? 'Pause' : 'Resume'),
+            icon: autoPaused ? Icons.edit : (isRunning ? Icons.pause : Icons.play_arrow),
+            onTap: () async {
               final t = context.read<TimerController>();
+
+              if (autoPaused) {
+                // Same flow as Stop: open StopSessionDialog to confirm end time.
+                final sessions = context.read<SessionsController>();
+
+                final secs = t.elapsedSeconds(activityId: activityId);
+                if (secs == 0) {
+                  t.clearAutoPausedFlag(activityId: activityId);
+                  return;
+                }
+
+                final end = t.autoPausedAt(activityId: activityId) ?? DateTime.now();
+                final start = end.subtract(Duration(seconds: secs));
+
+                final result = await StopSessionDialog.open(
+                  context,
+                  initialStart: start,
+                  initialEnd: end,
+                );
+
+                if (!context.mounted) return;
+                if (result == null) return;
+
+                final fixed = t.stop(
+                  activityId: activityId,
+                  startedAt: result.startedAt,
+                  finishedAt: result.finishedAt,
+                );
+
+                t.reset(activityId: activityId);
+
+                if (fixed == null) return;
+
+                await sessions.addTimedEntry(
+                  activityId: activityId,
+                  note: result.note ?? 'Auto-paused (24h cap)',
+                  startedAt: fixed.start,
+                  finishedAt: fixed.end,
+                );
+
+                return;
+              }
+
+              // Normal behavior (no auto-pause).
               if (isRunning) {
                 t.pause(activityId: activityId);
               } else {

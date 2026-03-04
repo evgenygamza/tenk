@@ -42,22 +42,35 @@ class TimerSnapshot {
   final int? runningSinceMs;
   final int accumulatedSeconds;
 
+  // If true, this timer was automatically paused by the app (e.g., 24h cap).
+  final bool autoPaused;
+  final int? autoPausedAtMs;
+
   const TimerSnapshot({
     this.runningSinceMs,
     this.accumulatedSeconds = 0,
+    this.autoPaused = false,
+    this.autoPausedAtMs,
   });
 
   Map<String, dynamic> toJson() => {
     'runningSinceMs': runningSinceMs,
     'accumulatedSeconds': accumulatedSeconds,
+    'autoPaused': autoPaused,
+    'autoPausedAtMs': autoPausedAtMs,
   };
 
   factory TimerSnapshot.fromJson(Map<String, dynamic> json) {
     final rs = json['runningSinceMs'];
     final acc = json['accumulatedSeconds'];
+    final ap = json['autoPaused'];
+    final apAt = json['autoPausedAtMs'];
+
     return TimerSnapshot(
       runningSinceMs: rs is int ? rs : null,
       accumulatedSeconds: acc is int ? acc : 0,
+      autoPaused: ap is bool ? ap : false,
+      autoPausedAtMs: apAt is int ? apAt : null,
     );
   }
 }
