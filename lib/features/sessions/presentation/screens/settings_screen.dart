@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tenk/testing/app_keys.dart';
 
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
@@ -12,6 +13,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SafeArea(
+        key: AppKeys.screenSettings,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

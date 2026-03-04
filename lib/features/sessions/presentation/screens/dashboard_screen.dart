@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tenk/testing/app_keys.dart';
 
 import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
@@ -30,6 +31,7 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('My Activities')),
       body: SafeArea(
+        key: AppKeys.screenDashboard,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: GridView.builder(

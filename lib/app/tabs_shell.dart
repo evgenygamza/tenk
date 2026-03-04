@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tenk/testing/app_keys.dart';
 
 import 'package:tenk/features/sessions/presentation/screens/dashboard_screen.dart';
 import 'package:tenk/features/sessions/presentation/screens/history_screen.dart';
@@ -50,14 +51,17 @@ class _TabsShellState extends State<TabsShell> {
             onDestinationSelected: _setTab,
             destinations: const [
               NavigationDestination(
+                key: AppKeys.tabDashboard,
                 icon: Icon(Icons.grid_view_rounded),
-                label: 'Dashbord',
+                label: 'Dashboard',
               ),
               NavigationDestination(
+                key: AppKeys.tabHistory,
                 icon: Icon(Icons.history),
                 label: 'History',
               ),
               NavigationDestination(
+                key: AppKeys.tabSettings,
                 icon: Icon(Icons.tune_rounded),
                 label: 'Settings',
               ),
