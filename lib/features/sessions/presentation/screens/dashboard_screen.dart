@@ -196,7 +196,6 @@ class _ActivityCard extends StatelessWidget {
   final int totalMinutes;
 
   const _ActivityCard({
-    super.key,
     required this.activityId,
     required this.title,
     required this.progressColor,

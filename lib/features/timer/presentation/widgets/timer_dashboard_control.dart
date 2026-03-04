@@ -229,14 +229,16 @@ class _MiniIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             // Slight translucent pill behind the icon to increase contrast.
             color: enabled
-                ? Colors.white.withOpacity(0.18)
-                : Colors.white.withOpacity(0.10),
+                ? Colors.white.withValues(alpha: 0.18)
+                : Colors.white.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Icon(
             icon,
             size: 18,
-            color: enabled ? Colors.white : Colors.white.withOpacity(0.55),
+            color: enabled
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.55),
           ),
         ),
       ),
