@@ -11,7 +11,7 @@ import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
 import 'package:tenk/ui/activity_palette.dart';
 
-import 'activity_details_screen.dart';
+import 'activity_details/activity_details_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_utils.dart';
 import 'package:tenk/ui/progress_bar.dart';
 
 class ActivityStatsBlock extends StatelessWidget {
@@ -23,9 +24,16 @@ class ActivityStatsBlock extends StatelessWidget {
     // Data
     final totalMinutes = sessions.totalMinutesAllTime(activityId);
     final todayMinutes = sessions.totalMinutesToday(activityId);
+    final thisWeekMinutes = ActivityDetailsUtils.minutesThisWeek(
+      entries: sessions.entries,
+      activityId: activityId,
+    );
 
-    // TODO (later): real ETA from pace. For now: mock based on some simple heuristic.
-    final etaDays = _mockEtaDays(totalMinutes);
+    final etaDays = ActivityDetailsUtils.etaDaysToCurrentGoal(
+      entries: sessions.entries,
+      activityId: activityId,
+      totalMinutesAllTime: totalMinutes,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,25 +55,39 @@ class ActivityStatsBlock extends StatelessWidget {
         const SizedBox(height: 10),
 
         // Main number (ETA)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${etaDays}d',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+        if (etaDays == null) ...[
+          Text(
+            'No data yet 👀',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(
-                'to goal',
-                style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Track a few sessions to get ETA',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ] else ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${etaDays} days',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  'to current goal',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+        ],
 
         const SizedBox(height: 12),
 
@@ -87,14 +109,6 @@ class ActivityStatsBlock extends StatelessWidget {
                     color: accent,
                   ),
                 ),
-                // Positioned(
-                //   right: 0,
-                //   top: 0,
-                //   child: TextButton(
-                //     onPressed: onMoreStats,
-                //     child: const Text('More'),
-                //   ),
-                // ),
               ],
             ),
           ),
@@ -109,7 +123,7 @@ class ActivityStatsBlock extends StatelessWidget {
             Expanded(
               child: _MiniTile(
                 title: 'All time',
-                value: _formatHoursMinutes(totalMinutes),
+                value: ActivityDetailsUtils.formatHoursMinutes(totalMinutes),
                 icon: Icons.all_inclusive,
               ),
             ),
@@ -117,7 +131,7 @@ class ActivityStatsBlock extends StatelessWidget {
             Expanded(
               child: _MiniTile(
                 title: 'This week',
-                value: _mockThisWeek(totalMinutes),
+                value: ActivityDetailsUtils.formatHoursMinutes(thisWeekMinutes),
                 icon: Icons.date_range,
               ),
             ),
@@ -125,7 +139,10 @@ class ActivityStatsBlock extends StatelessWidget {
             Expanded(
               child: _MiniTile(
                 title: 'Pace',
-                value: _mockPace(),
+                value: ActivityDetailsUtils.pacePerDayLabel(
+                  entries: sessions.entries,
+                  activityId: activityId,
+                ),
                 icon: Icons.speed,
               ),
             ),
@@ -135,38 +152,11 @@ class ActivityStatsBlock extends StatelessWidget {
         // (optional small today line; can remove if you want even cleaner)
         const SizedBox(height: 10),
         Text(
-          'Today: ${_formatHoursMinutes(todayMinutes)}',
+          'Today: ${ActivityDetailsUtils.formatHoursMinutes(todayMinutes)}',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );
-  }
-
-  // ---------- mocks / helpers (we’ll replace with real stats later) ----------
-
-  static int _mockEtaDays(int totalMinutes) {
-    // super rough: as you progress, ETA decreases
-    if (totalMinutes <= 60) return 30;
-    if (totalMinutes <= 5 * 60) return 21;
-    if (totalMinutes <= 10 * 60) return 14;
-    if (totalMinutes <= 20 * 60) return 12;
-    return 9;
-  }
-
-  static String _mockThisWeek(int totalMinutes) {
-    // placeholder until we aggregate per-week
-    final h = (totalMinutes ~/ 60).clamp(0, 12);
-    return '${h}h';
-  }
-
-  static String _mockPace() => '32m/d';
-
-  static String _formatHoursMinutes(int totalMinutes) {
-    final h = totalMinutes ~/ 60;
-    final m = totalMinutes % 60;
-    if (h <= 0) return '${m}m';
-    if (m == 0) return '${h}h';
-    return '${h}h ${m}m';
   }
 }
 

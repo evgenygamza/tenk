@@ -8,7 +8,7 @@ import 'package:tenk/features/sessions/presentation/state/sessions_controller.da
 import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
 import 'package:tenk/features/timer/presentation/widgets/timer_dashboard_control.dart';
 
-import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
+import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_screen.dart';
 import 'package:tenk/ui/progress_bar.dart';
 import 'package:tenk/ui/activity_palette.dart';
 
