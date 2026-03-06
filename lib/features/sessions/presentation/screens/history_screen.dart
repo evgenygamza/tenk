@@ -6,11 +6,12 @@ import 'package:tenk/features/activities/domain/models/activity.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
+
 import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
+import 'package:tenk/ui/activity_palette.dart';
 
 import 'activity_details_screen.dart';
-import 'dashboard_screen.dart'; // activityPalette
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});

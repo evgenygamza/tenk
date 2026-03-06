@@ -10,14 +10,7 @@ import 'package:tenk/features/timer/presentation/widgets/timer_dashboard_control
 
 import 'package:tenk/features/sessions/presentation/screens/activity_details_screen.dart';
 import 'package:tenk/ui/progress_bar.dart';
-
-const activityPalette = [
-  Color(0xFF22C55E), // green
-  Color(0xFF06B6D4), // cyan
-  Color(0xFFF97316), // orange
-  Color(0xFFA855F7), // purple
-  Color(0xFFEC4899), // pink
-];
+import 'package:tenk/ui/activity_palette.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
