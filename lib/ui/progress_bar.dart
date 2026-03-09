@@ -5,12 +5,14 @@ class ProgressBar extends StatelessWidget {
   final int totalMinutesAllTime;
   final bool compact;
   final Color? color;
+  final double? thickness;
 
   const ProgressBar({
     super.key,
     required this.totalMinutesAllTime,
     this.compact = false,
     this.color,
+    this.thickness,
   });
 
   @override
@@ -27,17 +29,15 @@ class ProgressBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Progress: ${_fmt(total)} / ${_fmt(goalMinutes)}',
-          style: compact
-              ? Theme.of(context).textTheme.bodySmall
-              : Theme.of(context).textTheme.titleMedium,
+        const SizedBox(height: 6),
+        LinearProgressIndicator(
+          value: progress,
+          color: color,
+          minHeight: thickness ?? (compact ? 4 : 10),
         ),
         const SizedBox(height: 6),
-        LinearProgressIndicator(value: progress, color: color),
-        const SizedBox(height: 6),
         Text(
-          '${_fmt(prevMinutes)} → ${_fmt(goalMinutes)}',
+          'Progress: ${_fmt(total)} → ${_fmt(goalMinutes)}',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],

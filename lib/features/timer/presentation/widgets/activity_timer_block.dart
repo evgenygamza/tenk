@@ -28,92 +28,81 @@ class ActivityTimerBlock extends StatelessWidget {
         ? 'Paused'
         : 'Tap Start to begin a session';
 
-    return Card(
-      elevation: 0,
-      color: Theme.of(context).colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Timer', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(
-              'Track time for this activity',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Timer', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 6),
+        Text(
+          'Track time for this activity',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
 
-            Center(
-              child: Text(
-                _formatElapsed(seconds),
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+        Center(
+          child: Text(
+            _formatElapsed(seconds),
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            hint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Controls
+        if (isIdle) ...[
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => context.read<TimerController>().start(activityId: activityId),
+              child: const Text('Start'),
+            ),
+          ),
+        ] else if (isRunning) ...[
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => context.read<TimerController>().pause(activityId: activityId),
+                  child: const Text('Pause'),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                hint,
-                style: Theme.of(context).textTheme.bodySmall,
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => _stopFlow(context),
+                  child: const Text('Stop'),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Controls
-            if (isIdle) ...[
-              SizedBox(
-                width: double.infinity,
+            ],
+          ),
+        ] else if (isPaused) ...[
+          Row(
+            children: [
+              Expanded(
                 child: FilledButton(
                   onPressed: () => context.read<TimerController>().start(activityId: activityId),
-                  child: const Text('Start'),
+                  child: const Text('Resume'),
                 ),
               ),
-            ] else if (isRunning) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => context.read<TimerController>().pause(activityId: activityId),
-                      child: const Text('Pause'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => _stopFlow(context),
-                      child: const Text('Stop'),
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => _stopFlow(context),
+                  child: const Text('Stop'),
+                ),
               ),
-            ] else if (isPaused) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => context.read<TimerController>().start(activityId: activityId),
-                      child: const Text('Resume'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => _stopFlow(context),
-                      child: const Text('Stop'),
-                    ),
-                  ),
-                ],
-              ),
-            ]
-          ],
-        ),
-      ),
+            ],
+          ),
+        ]
+      ],
     );
   }
 

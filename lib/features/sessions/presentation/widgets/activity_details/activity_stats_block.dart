@@ -89,33 +89,18 @@ class ActivityStatsBlock extends StatelessWidget {
           ),
         ],
 
-        const SizedBox(height: 12),
-
-        Card(
-          elevation: 0,
-          color: Theme.of(context).colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-          ),
+        Padding(
+          padding: const EdgeInsets.all(12),
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 72, top: 6),
-                  child: ProgressBar(
-                    totalMinutesAllTime: totalMinutes,
-                    color: accent,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.only(top: 6),
+            child: ProgressBar(
+              totalMinutesAllTime: totalMinutes,
+              color: accent,
             ),
           ),
         ),
 
         const SizedBox(height: 6),
-        const SizedBox(height: 12),
 
         // Tiles row
         Row(
