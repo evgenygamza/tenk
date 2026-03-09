@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_utils.dart';
 import 'package:tenk/ui/progress_bar.dart';
+import 'package:tenk/ui/ui_tokens.dart';
 
 class ActivityStatsBlock extends StatelessWidget {
   final String activityId;
@@ -41,10 +42,7 @@ class ActivityStatsBlock extends StatelessWidget {
         // Optional header
         Row(
           children: [
-            Text(
-              'Stats',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Stats', style: sectionTitleStyle(context)),
             const Spacer(),
             TextButton(
               onPressed: onMoreStats,
@@ -72,7 +70,7 @@ class ActivityStatsBlock extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${etaDays} days',
+                '$etaDays days',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -89,18 +87,14 @@ class ActivityStatsBlock extends StatelessWidget {
           ),
         ],
 
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: ProgressBar(
-              totalMinutesAllTime: totalMinutes,
-              color: accent,
-            ),
-          ),
+        const SizedBox(height: 16),
+
+        ProgressBar(
+          totalMinutesAllTime: totalMinutes,
+          color: accent,
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 12),
 
         // Tiles row
         Row(

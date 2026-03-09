@@ -18,3 +18,9 @@ class UiTokens {
   static const shadowOffset = Offset(0, 10);
   static const shadowOpacity = 0.18;
 }
+
+TextStyle sectionTitleStyle(BuildContext context) {
+  return Theme.of(context).textTheme.titleLarge!.copyWith(
+    fontWeight: FontWeight.w700,
+  );
+}

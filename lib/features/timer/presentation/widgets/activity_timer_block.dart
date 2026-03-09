@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/widgets/stop_session_dialog.dart';
+import 'package:tenk/ui/ui_tokens.dart';
 
 class ActivityTimerBlock extends StatelessWidget {
   final String activityId;
@@ -31,7 +32,7 @@ class ActivityTimerBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Timer', style: Theme.of(context).textTheme.titleMedium),
+        Text('Timer', style: sectionTitleStyle(context)),
         const SizedBox(height: 6),
         Text(
           'Track time for this activity',

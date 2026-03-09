@@ -9,6 +9,8 @@ import 'package:tenk/ui/activity_palette.dart';
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_entries_block.dart';
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_stats_block.dart';
 import 'package:tenk/features/timer/presentation/widgets/activity_timer_block.dart';
+import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_auto_pause_banner.dart';
+import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_actions.dart';
 
 enum _ActivityMenuAction { rename, changeColor, delete }
 
@@ -106,8 +108,18 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
           title: Text(title),
           actions: [
             PopupMenuButton<_ActivityMenuAction>(
-              onSelected: (a) {
-                // TODO: implement menu actions later
+              onSelected: (a) async {
+                switch (a) {
+                  case _ActivityMenuAction.rename:
+                    await ActivityDetailsActions.rename(context, activityId: widget.activityId);
+                    break;
+                  case _ActivityMenuAction.changeColor:
+                    await ActivityDetailsActions.changeColor(context, activityId: widget.activityId);
+                    break;
+                  case _ActivityMenuAction.delete:
+                    await ActivityDetailsActions.delete(context, activityId: widget.activityId);
+                    break;
+                }
               },
               itemBuilder: (ctx) => const [
                 PopupMenuItem(
@@ -137,6 +149,7 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
                   // TODO: open stats screen
                 },
               ),
+              ActivityAutoPauseBanner(activityId: widget.activityId),
               const SizedBox(height: 16),
               ActivityTimerBlock(
                 activityId: widget.activityId,
