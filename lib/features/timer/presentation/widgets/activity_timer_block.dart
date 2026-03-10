@@ -154,8 +154,9 @@ class ActivityTimerBlock extends StatelessWidget {
   }
 
   static String _formatElapsed(int seconds) {
-    final mm = (seconds ~/ 60).toString().padLeft(2, '0');
+    final hh = (seconds ~/ 3600).toString().padLeft(2, '0');
+    final mm = ((seconds % 3600) ~/ 60).toString().padLeft(2, '0');
     final ss = (seconds % 60).toString().padLeft(2, '0');
-    return '$mm:$ss';
+    return '$hh:$mm:$ss';
   }
 }

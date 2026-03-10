@@ -4,146 +4,185 @@ import 'package:flutter/material.dart';
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
 Future<SessionEntry?> showEditSessionDialog(
-  BuildContext context, {
-  required SessionEntry entry,
-}) async {
-  final baseDate = entry.startedAt;
-  final endInitial = entry.startedAt.add(Duration(minutes: entry.minutes));
+    BuildContext context, {
+      required SessionEntry entry,
+    }) {
+  return showDialog<SessionEntry?>(
+    context: context,
+    builder: (ctx) => _EditSessionDialog(entry: entry),
+  );
+}
 
-  final startCtrl = TextEditingController(text: _formatTime(baseDate));
-  final endCtrl = TextEditingController(text: _formatTime(endInitial));
-  final noteCtrl = TextEditingController(text: entry.note ?? '');
+class _EditSessionDialog extends StatefulWidget {
+  const _EditSessionDialog({required this.entry});
 
-  try {
-    return await showDialog<SessionEntry?>(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setState) {
-            String? error;
-            final preview = _previewDurationMinutes(
-              baseDate,
-              startCtrl.text,
-              endCtrl.text,
-            );
+  final SessionEntry entry;
 
-            return AlertDialog(
-              title: const Text('Edit session'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: startCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Start (HH:mm)',
-                      hintText: '09:30',
-                    ),
-                    keyboardType: TextInputType.datetime,
-                    onChanged: (_) => setState(() => error = null),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: endCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'End (HH:mm)',
-                      hintText: '10:15',
-                    ),
-                    keyboardType: TextInputType.datetime,
-                    onChanged: (_) => setState(() => error = null),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: noteCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Note (optional)',
-                    ),
-                    minLines: 1,
-                    maxLines: 3,
-                  ),
-                  if (preview != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Duration: ${_formatHoursMinutes(preview)}',
-                        style: Theme.of(ctx).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                  if (error != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        error!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(null),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    final s = _parseHHmm(startCtrl.text);
-                    final e = _parseHHmm(endCtrl.text);
-                    if (s == null || e == null) {
-                      setState(() => error = 'Time format: HH:mm');
-                      return;
-                    }
+  @override
+  State<_EditSessionDialog> createState() => _EditSessionDialogState();
+}
 
-                    final start = DateTime(
-                      baseDate.year,
-                      baseDate.month,
-                      baseDate.day,
-                      s.$1,
-                      s.$2,
-                    );
-                    var end = DateTime(
-                      baseDate.year,
-                      baseDate.month,
-                      baseDate.day,
-                      e.$1,
-                      e.$2,
-                    );
-                    if (!end.isAfter(start)) {
-                      end = end.add(const Duration(days: 1));
-                    }
+class _EditSessionDialogState extends State<_EditSessionDialog> {
+  late final TextEditingController _startCtrl;
+  late final TextEditingController _endCtrl;
+  late final TextEditingController _noteCtrl;
 
-                    final minutes = end.difference(start).inMinutes;
-                    if (minutes <= 0) {
-                      setState(() => error = 'End must be after Start');
-                      return;
-                    }
+  String? _error;
 
-                    final updated = SessionEntry(
-                      id: entry.id,
-                      activityId: entry.activityId,
-                      startedAt: start,
-                      minutes: max(1, minutes),
-                      note: noteCtrl.text.trim().isEmpty
-                          ? null
-                          : noteCtrl.text.trim(),
-                    );
+  SessionEntry get entry => widget.entry;
+  DateTime get baseDate => entry.startedAt;
 
-                    Navigator.of(ctx).pop(updated);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+  @override
+  void initState() {
+    super.initState();
+
+    final endInitial = entry.startedAt.add(Duration(minutes: entry.minutes));
+
+    _startCtrl = TextEditingController(text: _formatTime(entry.startedAt));
+    _endCtrl = TextEditingController(text: _formatTime(endInitial));
+    _noteCtrl = TextEditingController(text: entry.note ?? '');
+  }
+
+  @override
+  void dispose() {
+    _startCtrl.dispose();
+    _endCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clearError() {
+    if (_error != null) {
+      setState(() {
+        _error = null;
+      });
+    }
+  }
+
+  void _save() {
+    final s = _parseHHmm(_startCtrl.text);
+    final e = _parseHHmm(_endCtrl.text);
+
+    if (s == null || e == null) {
+      setState(() {
+        _error = 'Time format: HH:mm';
+      });
+      return;
+    }
+
+    final start = DateTime(
+      baseDate.year,
+      baseDate.month,
+      baseDate.day,
+      s.$1,
+      s.$2,
     );
-  } finally {
-    startCtrl.dispose();
-    endCtrl.dispose();
-    noteCtrl.dispose();
+
+    var end = DateTime(
+      baseDate.year,
+      baseDate.month,
+      baseDate.day,
+      e.$1,
+      e.$2,
+    );
+
+    if (!end.isAfter(start)) {
+      end = end.add(const Duration(days: 1));
+    }
+
+    final minutes = end.difference(start).inMinutes;
+    if (minutes <= 0) {
+      setState(() {
+        _error = 'End must be after Start';
+      });
+      return;
+    }
+
+    final updated = SessionEntry(
+      id: entry.id,
+      activityId: entry.activityId,
+      startedAt: start,
+      minutes: max(1, minutes),
+      note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+    );
+
+    Navigator.of(context).pop(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = _previewDurationMinutes(
+      baseDate,
+      _startCtrl.text,
+      _endCtrl.text,
+    );
+
+    return AlertDialog(
+      title: const Text('Edit session'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _startCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Start (HH:mm)',
+              hintText: '09:30',
+            ),
+            keyboardType: TextInputType.datetime,
+            onChanged: (_) => _clearError(),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _endCtrl,
+            decoration: const InputDecoration(
+              labelText: 'End (HH:mm)',
+              hintText: '10:15',
+            ),
+            keyboardType: TextInputType.datetime,
+            onChanged: (_) => _clearError(),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _noteCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Note (optional)',
+            ),
+            minLines: 1,
+            maxLines: 3,
+          ),
+          if (preview != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Duration: ${_formatHoursMinutes(preview)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 

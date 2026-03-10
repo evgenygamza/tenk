@@ -1,6 +1,46 @@
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
 
-class ActivityDetailsUtils {
+/// Formatting helpers (labels, time strings).
+class ActivityDetailsFormat {
+  static String formatHoursMinutes(int totalMinutes) {
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+    if (h <= 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
+
+  static String pacePerDayLabel(int minutesPerDay) {
+    if (minutesPerDay < 60) return '${minutesPerDay}m/d';
+    final h = minutesPerDay ~/ 60;
+    final m = minutesPerDay % 60;
+    if (m == 0) return '${h}h/d';
+    return '${h}h ${m}m/d';
+  }
+
+  static String monShort(int m) {
+    const names = [
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec',
+    ];
+    return names[(m - 1).clamp(0, 11)];
+  }
+
+  /// For daily chart labels: show "Mar 1" on first day of month, otherwise "2", "3"...
+  static String dailyLabel(DateTime d) {
+    return d.day == 1 ? '${monShort(d.month)} 1' : '${d.day}';
+  }
+
+  /// For monthly chart labels: show year on January, otherwise month short name.
+  static String monthLabel(DateTime monthStart) {
+    return monthStart.month == 1
+        ? '${monthStart.year} Jan'
+        : monShort(monthStart.month);
+  }
+}
+
+/// Aggregation helpers (summing minutes, windows).
+class ActivityDetailsAggregate {
   static int minutesThisWeek({
     required List<SessionEntry> entries,
     required String activityId,
@@ -21,14 +61,6 @@ class ActivityDetailsUtils {
     return sum;
   }
 
-  static String formatHoursMinutes(int totalMinutes) {
-    final h = totalMinutes ~/ 60;
-    final m = totalMinutes % 60;
-    if (h <= 0) return '${m}m';
-    if (m == 0) return '${h}h';
-    return '${h}h ${m}m';
-  }
-
   static int minutesLastNDays({
     required List<SessionEntry> entries,
     required String activityId,
@@ -36,7 +68,8 @@ class ActivityDetailsUtils {
     DateTime? now,
   }) {
     final n = now ?? DateTime.now();
-    final from = DateTime(n.year, n.month, n.day).subtract(Duration(days: days - 1));
+    final from = DateTime(n.year, n.month, n.day)
+        .subtract(Duration(days: days - 1));
     final to = DateTime(n.year, n.month, n.day).add(const Duration(days: 1));
 
     var sum = 0;
@@ -60,13 +93,12 @@ class ActivityDetailsUtils {
       days: days,
     );
     final perDay = (total / days).round();
-    if (perDay < 60) return '${perDay}m/d';
-    final h = perDay ~/ 60;
-    final m = perDay % 60;
-    if (m == 0) return '${h}h/d';
-    return '${h}h ${m}m/d';
+    return ActivityDetailsFormat.pacePerDayLabel(perDay);
   }
+}
 
+/// Goal steps + ETA helpers (progressive goals).
+class ActivityDetailsGoals {
   static const List<int> goalStepsMinutes = <int>[
     10 * 60,
     50 * 60,
@@ -112,7 +144,7 @@ class ActivityDetailsUtils {
     final remaining = goal - totalMinutesAllTime;
     if (remaining <= 0) return 0;
 
-    final totalRecent = minutesLastNDays(
+    final totalRecent = ActivityDetailsAggregate.minutesLastNDays(
       entries: entries,
       activityId: activityId,
       days: paceDaysWindow,
@@ -126,4 +158,70 @@ class ActivityDetailsUtils {
   }
 }
 
+/// Backward-compatible facade so you don't have to refactor call sites immediately.
+/// Feel free to gradually migrate usages to ActivityDetailsFormat/Aggregate/Goals.
+class ActivityDetailsUtils {
+  static int minutesThisWeek({
+    required List<SessionEntry> entries,
+    required String activityId,
+    DateTime? now,
+  }) =>
+      ActivityDetailsAggregate.minutesThisWeek(
+        entries: entries,
+        activityId: activityId,
+        now: now,
+      );
 
+  static int minutesLastNDays({
+    required List<SessionEntry> entries,
+    required String activityId,
+    required int days,
+    DateTime? now,
+  }) =>
+      ActivityDetailsAggregate.minutesLastNDays(
+        entries: entries,
+        activityId: activityId,
+        days: days,
+        now: now,
+      );
+
+  static String pacePerDayLabel({
+    required List<SessionEntry> entries,
+    required String activityId,
+    int days = 30,
+  }) =>
+      ActivityDetailsAggregate.pacePerDayLabel(
+        entries: entries,
+        activityId: activityId,
+        days: days,
+      );
+
+  static String formatHoursMinutes(int totalMinutes) =>
+      ActivityDetailsFormat.formatHoursMinutes(totalMinutes);
+
+  static const List<int> goalStepsMinutes = ActivityDetailsGoals.goalStepsMinutes;
+
+  static int currentGoalMinutes(int totalMinutes) =>
+      ActivityDetailsGoals.currentGoalMinutes(totalMinutes);
+
+  static int previousGoalMinutes(int totalMinutes) =>
+      ActivityDetailsGoals.previousGoalMinutes(totalMinutes);
+
+  static int? etaDaysToCurrentGoal({
+    required List<SessionEntry> entries,
+    required String activityId,
+    required int totalMinutesAllTime,
+    int paceDaysWindow = 30,
+    DateTime? now,
+  }) =>
+      ActivityDetailsGoals.etaDaysToCurrentGoal(
+        entries: entries,
+        activityId: activityId,
+        totalMinutesAllTime: totalMinutesAllTime,
+        paceDaysWindow: paceDaysWindow,
+        now: now,
+      );
+
+  static String dailyLabel(DateTime d) => ActivityDetailsFormat.dailyLabel(d);
+  static String monthLabel(DateTime m) => ActivityDetailsFormat.monthLabel(m);
+}
