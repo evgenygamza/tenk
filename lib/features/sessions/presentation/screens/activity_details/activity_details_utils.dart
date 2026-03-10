@@ -1,4 +1,5 @@
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
+import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_entries_chart.dart';
 
 /// Formatting helpers (labels, time strings).
 class ActivityDetailsFormat {
@@ -36,6 +37,14 @@ class ActivityDetailsFormat {
     return monthStart.month == 1
         ? '${monthStart.year} Jan'
         : monShort(monthStart.month);
+  }
+
+  /// For entries list labels
+  static String dateTimeLabel(DateTime dt) {
+    final date = '${monShort(dt.month)} ${dt.day.toString().padLeft(2, '0')}';
+    final time =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '$date · $time';
   }
 }
 
@@ -94,6 +103,62 @@ class ActivityDetailsAggregate {
     );
     final perDay = (total / days).round();
     return ActivityDetailsFormat.pacePerDayLabel(perDay);
+  }
+
+  static List<ActivityChartBar> dailyBars({
+    required List<SessionEntry> entries,
+    required String activityId,
+    int days = 30,
+  }) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final map = <DateTime, int>{};
+
+    for (final e in entries) {
+      if (e.activityId != activityId) continue;
+      final d = DateTime(e.startedAt.year, e.startedAt.month, e.startedAt.day);
+      map[d] = (map[d] ?? 0) + e.minutes;
+    }
+
+    final out = <ActivityChartBar>[];
+    for (var i = days - 1; i >= 0; i--) {
+      final d = today.subtract(Duration(days: i));
+      final minutes = map[d] ?? 0;
+      out.add(ActivityChartBar(label: ActivityDetailsFormat.dailyLabel(d), minutes: minutes));
+    }
+    return out;
+  }
+
+  static List<ActivityChartBar> monthlyBars({
+    required List<SessionEntry> entries,
+    required String activityId,
+    int months = 12,
+  }) {
+    final now = DateTime.now();
+    final thisMonth = DateTime(now.year, now.month, 1);
+
+    DateTime addMonths(DateTime d, int delta) {
+      final y = d.year + ((d.month - 1 + delta) ~/ 12);
+      final m = ((d.month - 1 + delta) % 12) + 1;
+      return DateTime(y, m, 1);
+    }
+
+    final map = <DateTime, int>{}; // monthStart -> minutes
+
+    for (final e in entries) {
+      if (e.activityId != activityId) continue;
+      final mStart = DateTime(e.startedAt.year, e.startedAt.month, 1);
+      map[mStart] = (map[mStart] ?? 0) + e.minutes;
+    }
+
+    final out = <ActivityChartBar>[];
+    for (var i = months - 1; i >= 0; i--) {
+      final mStart = addMonths(thisMonth, -i);
+      final minutes = map[mStart] ?? 0;
+      out.add(ActivityChartBar(label: ActivityDetailsFormat.monthLabel(mStart), minutes: minutes));
+    }
+    return out;
   }
 }
 
@@ -223,5 +288,31 @@ class ActivityDetailsUtils {
       );
 
   static String dailyLabel(DateTime d) => ActivityDetailsFormat.dailyLabel(d);
+
   static String monthLabel(DateTime m) => ActivityDetailsFormat.monthLabel(m);
+
+  static String dateTimeLabel(DateTime dt) =>
+      ActivityDetailsFormat.dateTimeLabel(dt);
+
+  static List<ActivityChartBar> dailyBars({
+    required List<SessionEntry> entries,
+    required String activityId,
+    int days = 30,
+  }) =>
+      ActivityDetailsAggregate.dailyBars(
+        entries: entries,
+        activityId: activityId,
+        days: days,
+      );
+
+  static List<ActivityChartBar> monthlyBars({
+    required List<SessionEntry> entries,
+    required String activityId,
+    int months = 12,
+  }) =>
+      ActivityDetailsAggregate.monthlyBars(
+        entries: entries,
+        activityId: activityId,
+        months: months,
+      );
 }

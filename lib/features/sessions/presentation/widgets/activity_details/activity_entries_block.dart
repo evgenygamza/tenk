@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:tenk/features/sessions/domain/models/session_entry.dart';
-import 'package:tenk/features/sessions/presentation/screens/add_manual_screen.dart';
+import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_utils.dart';
+
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_entries_chart.dart';
+import 'package:tenk/features/sessions/presentation/widgets/edit_session_dialog.dart';
+import 'package:tenk/features/sessions/presentation/widgets/confirm_delete_session_dialog.dart';
+import 'package:tenk/ui/ui_tokens.dart';
 
 enum _EntriesViewMode { chart, list }
 
 class ActivityEntriesBlock extends StatefulWidget {
   final String activityId;
   final List<SessionEntry> entries;
-  final VoidCallback onImportExperience;
+  final Future<void> Function() onImportExperience;
+  final Future<void> Function() onAddManual;
 
   const ActivityEntriesBlock({
     super.key,
     required this.activityId,
     required this.entries,
     required this.onImportExperience,
+    required this.onAddManual,
   });
 
   @override
@@ -26,19 +33,26 @@ class ActivityEntriesBlock extends StatefulWidget {
 class _ActivityEntriesBlockState extends State<ActivityEntriesBlock> {
   _EntriesViewMode _mode = _EntriesViewMode.chart;
 
+  int _listLimit = 10;
+  static const int _listStep = 20;
+
   @override
   Widget build(BuildContext context) {
     final entriesSorted = [...widget.entries]
       ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
 
     // Daily series: last 30 days
-    final dailyBuckets = _buildDailySeries(entriesSorted, days: 30);
-    final daily = dailyBuckets
-        .map((b) => ActivityChartBar(label: _dailyLabel(b.day), minutes: b.minutes))
-        .toList();
+    final daily = ActivityDetailsUtils.dailyBars(
+      entries: entriesSorted,
+      activityId: widget.activityId,
+      days: 30,
+    );
 
-    // Monthly series: last 12 months totals
-    final monthly = _buildMonthlyTotalsSeries(entriesSorted, months: 12);
+    final monthly = ActivityDetailsUtils.monthlyBars(
+      entries: entriesSorted,
+      activityId: widget.activityId,
+      months: 12,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,9 +62,7 @@ class _ActivityEntriesBlockState extends State<ActivityEntriesBlock> {
           children: [
             Text(
               'Entries',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: sectionTitleStyle(context),
             ),
             const Spacer(),
             _HeaderToggle(
@@ -67,21 +79,14 @@ class _ActivityEntriesBlockState extends State<ActivityEntriesBlock> {
           runSpacing: 10,
           children: [
             FilledButton.tonalIcon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) =>
-                        AddManualScreen(activityId: widget.activityId),
-                  ),
-                );
-              },
+              onPressed: () => widget.onAddManual(),
               icon: const Icon(Icons.edit, size: 18),
-              label: const Text('Manual'),
+              label: const Text('Add entry'),
             ),
             OutlinedButton.icon(
-              onPressed: widget.onImportExperience,
+              onPressed: () => widget.onImportExperience(),
               icon: const Icon(Icons.file_download, size: 18),
-              label: const Text('Import'),
+              label: const Text('Add experience'),
             ),
           ],
         ),
@@ -95,87 +100,40 @@ class _ActivityEntriesBlockState extends State<ActivityEntriesBlock> {
             initialMode: ActivityChartMode.daily,
           ),
         ] else ...[
-          _EntriesListPreview(entries: entriesSorted),
+          _EntriesListPreview(
+            entries: entriesSorted,
+            limit: _listLimit,
+            onEdit: _editEntry,
+            onDelete: _deleteEntry,
+          ),
+          const SizedBox(height: 6),
+          if (entriesSorted.length > _listLimit)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _listLimit += _listStep),
+                child: const Text('See more'),
+              ),
+            ),
         ],
       ],
     );
   }
 
-  // ---------- helpers ----------
-
-  List<_DayBucket> _buildDailySeries(List<SessionEntry> entries,
-      {required int days}) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    final map = <DateTime, int>{};
-
-    for (final e in entries) {
-      if (e.activityId != widget.activityId) continue;
-      final d = DateTime(e.startedAt.year, e.startedAt.month, e.startedAt.day);
-      map[d] = (map[d] ?? 0) + e.minutes;
-    }
-
-    final out = <_DayBucket>[];
-    for (var i = days - 1; i >= 0; i--) {
-      final d = today.subtract(Duration(days: i));
-      out.add(_DayBucket(day: d, minutes: map[d] ?? 0));
-    }
-    return out;
+  Future<void> _editEntry(SessionEntry entry) async {
+    final sessions = context.read<SessionsController>();
+    final updated = await showEditSessionDialog(context, entry: entry);
+    if (updated == null) return;
+    await sessions.updateEntry(updated);
   }
 
-  List<ActivityChartBar> _buildMonthlyTotalsSeries(
-      List<SessionEntry> entries, {
-        int months = 12,
-      }) {
-    final now = DateTime.now();
-    final thisMonth = DateTime(now.year, now.month, 1);
+  Future<bool> _deleteEntry(SessionEntry entry) async {
+    final sessions = context.read<SessionsController>();
+    final ok = await confirmDeleteSessionDialog(context, entry: entry);
+    if (ok != true) return false;
 
-    DateTime addMonths(DateTime d, int delta) {
-      final y = d.year + ((d.month - 1 + delta) ~/ 12);
-      final m = ((d.month - 1 + delta) % 12) + 1;
-      return DateTime(y, m, 1);
-    }
-
-    // monthStart -> minutes
-    final map = <DateTime, int>{};
-
-    for (final e in entries) {
-      if (e.activityId != widget.activityId) continue;
-      final mStart = DateTime(e.startedAt.year, e.startedAt.month, 1);
-      map[mStart] = (map[mStart] ?? 0) + e.minutes;
-    }
-
-    final out = <ActivityChartBar>[];
-    for (var i = months - 1; i >= 0; i--) {
-      final mStart = addMonths(thisMonth, -i);
-      final minutes = map[mStart] ?? 0;
-
-      // Label: month, show year on January
-      final label = _monthLabel(mStart);
-
-      out.add(ActivityChartBar(label: label, minutes: minutes));
-    }
-    return out;
-  }
-
-  String _mon(int m) {
-    const names = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec'
-    ];
-    return names[(m - 1).clamp(0, 11)];
-  }
-
-  String _dailyLabel(DateTime d) {
-    return d.day == 1 ? '${_mon(d.month)} 1' : '${d.day}';
-  }
-
-  String _monthLabel(DateTime monthStart) {
-    // show year on January
-    return monthStart.month == 1
-        ? '${monthStart.year} Jan'
-        : _mon(monthStart.month);
+    await sessions.deleteEntry(entry.id);
+    return true;
   }
 }
 
@@ -240,8 +198,16 @@ class _HeaderToggle extends StatelessWidget {
 
 class _EntriesListPreview extends StatelessWidget {
   final List<SessionEntry> entries;
+  final int limit;
+  final Future<void> Function(SessionEntry entry) onEdit;
+  final Future<bool> Function(SessionEntry entry) onDelete;
 
-  const _EntriesListPreview({required this.entries});
+  const _EntriesListPreview({
+    required this.entries,
+    required this.limit,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -252,11 +218,16 @@ class _EntriesListPreview extends StatelessWidget {
       );
     }
 
-    final preview = entries.take(6).toList();
+    final preview = entries.take(limit).toList();
 
     return Column(
       children: [
-        for (final e in preview) _EntryRow(entry: e),
+        for (final e in preview)
+          _EntryRow(
+            entry: e,
+            onEdit: () => onEdit(e),
+            onDelete: () => onDelete(e),
+          ),
       ],
     );
   }
@@ -264,48 +235,122 @@ class _EntriesListPreview extends StatelessWidget {
 
 class _EntryRow extends StatelessWidget {
   final SessionEntry entry;
+  final Future<void> Function() onEdit;
+  final Future<bool> Function() onDelete;
 
-  const _EntryRow({required this.entry});
+  const _EntryRow({
+    required this.entry,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final time =
-        '${entry.startedAt.hour.toString().padLeft(2, '0')}:${entry.startedAt.minute.toString().padLeft(2, '0')}';
+    final stamp = ActivityDetailsUtils.dateTimeLabel(entry.startedAt);
     final dur = ActivityDetailsUtils.formatHoursMinutes(entry.minutes);
     final title = entry.note?.isNotEmpty == true ? entry.note! : 'Session';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 54,
-                child: Text(time, style: Theme.of(context).textTheme.labelLarge),
-              ),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
+    return Dismissible(
+      key: ValueKey('entry_${entry.id}'),
+      direction: DismissDirection.horizontal,
+      background: _SwipeBg(
+        icon: Icons.edit,
+        label: 'Edit',
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 16),
+        tint: Colors.amber,
+      ),
+      secondaryBackground: _SwipeBg(
+        icon: Icons.delete_outline,
+        label: 'Delete',
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        tint: Colors.red,
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          // Edit swipe: do not dismiss the row
+          await onEdit();
+          return false;
+        }
+
+        if (direction == DismissDirection.endToStart) {
+          // Delete swipe: run delete flow and dismiss only if actually deleted
+          await onDelete();
+          // We can't reliably know if user confirmed deletion unless onDelete returns bool.
+          // So we keep the row and let controller update the list after deletion.
+          return false;
+        }
+
+        return false;
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: Text(stamp, style: Theme.of(context).textTheme.labelLarge),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(dur, style: Theme.of(context).textTheme.labelLarge),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
-        ],
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(dur, style: Theme.of(context).textTheme.labelLarge),
+              ],
+            ),
+            const SizedBox(height: 5),
+            const Divider(height: 1),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DayBucket {
-  final DateTime day;
-  final int minutes;
-  const _DayBucket({required this.day, required this.minutes});
+class _SwipeBg extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Alignment alignment;
+  final EdgeInsets padding;
+  final Color tint;
+
+  const _SwipeBg({
+    required this.icon,
+    required this.label,
+    required this.alignment,
+    required this.padding,
+    required this.tint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      alignment: alignment,
+      padding: padding,
+      color: tint.withValues(alpha: 0.12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: cs.onSurfaceVariant),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

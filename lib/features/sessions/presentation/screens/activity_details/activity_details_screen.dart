@@ -12,6 +12,9 @@ import 'package:tenk/features/timer/presentation/widgets/activity_timer_block.da
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_auto_pause_banner.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_actions.dart';
 
+import 'package:tenk/features/sessions/presentation/widgets/activity_details/import_experience_dialog.dart';
+import 'package:tenk/features/sessions/presentation/widgets/activity_details/add_manual_dialog.dart';
+
 enum _ActivityMenuAction { rename, changeColor, delete }
 
 class ActivityDetailsScreen extends StatefulWidget {
@@ -159,8 +162,26 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               ActivityEntriesBlock(
                 activityId: widget.activityId,
                 entries: entries,
-                onImportExperience: () {
-                  // TODO: open calculator screen
+                onImportExperience: () async {
+                  final result = await ImportExperienceDialog.open(context);
+                  if (!context.mounted || result == null) return;
+
+                  await context.read<SessionsController>().addManual(
+                    widget.activityId,
+                    result.minutes,
+                    note: result.note,
+                  );
+                },
+
+                onAddManual: () async {
+                  final result = await AddManualDialog.open(context);
+                  if (!context.mounted || result == null) return;
+
+                  await context.read<SessionsController>().addManual(
+                    widget.activityId,
+                    result.minutes,
+                    note: result.note,
+                  );
                 },
               ),
             ],
