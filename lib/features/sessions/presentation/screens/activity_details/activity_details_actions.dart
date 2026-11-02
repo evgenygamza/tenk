@@ -4,9 +4,41 @@ import 'package:provider/provider.dart';
 import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/ui/activity_palette.dart';
+import 'package:tenk/features/sessions/presentation/widgets/activity_details/import_experience_dialog.dart';
 
 class ActivityDetailsActions {
-  static Future<void> rename(BuildContext context, {required String activityId}) async {
+  static Future<void> addExistingExperience(
+    BuildContext context, {
+    required String activityId,
+  }) async {
+    final activities = context.read<ActivitiesController>();
+    final activity = activities.activities
+        .where((a) => a.id == activityId)
+        .firstOrNull;
+    if (activity == null) return;
+
+    final result = await ImportExperienceDialog.open(
+      context,
+      initialMinutes: activity.initialMinutes,
+    );
+    if (!context.mounted || result == null) return;
+
+    try {
+      await activities.setInitialMinutes(activityId, result.minutes);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save experience. Please retry.'),
+        ),
+      );
+    }
+  }
+
+  static Future<void> rename(
+    BuildContext context, {
+    required String activityId,
+  }) async {
     final activities = context.read<ActivitiesController>();
     final idx = activities.activities.indexWhere((a) => a.id == activityId);
     if (idx == -1) return;
@@ -46,7 +78,10 @@ class ActivityDetailsActions {
     await activities.update(current.copyWith(title: t));
   }
 
-  static Future<void> changeColor(BuildContext context, {required String activityId}) async {
+  static Future<void> changeColor(
+    BuildContext context, {
+    required String activityId,
+  }) async {
     final activities = context.read<ActivitiesController>();
     final idx = activities.activities.indexWhere((a) => a.id == activityId);
     if (idx == -1) return;
@@ -85,7 +120,11 @@ class ActivityDetailsActions {
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          ? const Icon(
+                              Icons.check,
+                              size: 18,
+                              color: Colors.white,
+                            )
                           : null,
                     ),
                   );
@@ -112,7 +151,10 @@ class ActivityDetailsActions {
     await activities.update(current.copyWith(colorIndex: picked));
   }
 
-  static Future<void> delete(BuildContext context, {required String activityId}) async {
+  static Future<void> delete(
+    BuildContext context, {
+    required String activityId,
+  }) async {
     final sessions = context.read<SessionsController>();
     final activities = context.read<ActivitiesController>();
     final nav = Navigator.of(context);
@@ -122,7 +164,9 @@ class ActivityDetailsActions {
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Delete activity?'),
-          content: const Text('This will delete the activity and all its sessions.'),
+          content: const Text(
+            'This will delete the activity and all its sessions.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),

@@ -42,6 +42,20 @@ class ActivitiesController extends ChangeNotifier {
     await _repo.saveActivities(activities);
   }
 
+  /// Replaces prior experience without creating or changing session entries.
+  Future<void> setInitialMinutes(String activityId, int minutes) async {
+    if (minutes < 0) throw ArgumentError.value(minutes, 'minutes');
+    final idx = activities.indexWhere((a) => a.id == activityId);
+    if (idx == -1) return;
+
+    final updated = [...activities];
+    updated[idx] = updated[idx].copyWith(initialMinutes: minutes);
+    // Keep the current value if persistence fails, so the user can retry.
+    await _repo.saveActivities(updated);
+    activities = updated;
+    notifyListeners();
+  }
+
   Future<void> resetAll() async {
     activities = [];
     notifyListeners();

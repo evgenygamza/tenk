@@ -45,7 +45,7 @@ class DashboardScreen extends StatelessWidget {
               final act = activities[index];
               final color =
                   activityPalette[act.colorIndex % activityPalette.length];
-              final total = c.totalMinutesAllTime(act.id);
+              final total = act.initialMinutes + c.totalMinutesAllTime(act.id);
 
               return _ActivityCard(
                 activityId: act.id,

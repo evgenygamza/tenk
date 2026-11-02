@@ -86,7 +86,7 @@ class _ActivityEntriesBlockState extends State<ActivityEntriesBlock> {
             OutlinedButton.icon(
               onPressed: () => widget.onImportExperience(),
               icon: const Icon(Icons.file_download, size: 18),
-              label: const Text('Add experience'),
+              label: const Text('Existing experience'),
             ),
           ],
         ),

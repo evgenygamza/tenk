@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
 
 import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_utils.dart';
@@ -23,7 +24,11 @@ class ActivityStatsBlock extends StatelessWidget {
     final sessions = context.watch<SessionsController>();
 
     // Data
-    final totalMinutes = sessions.totalMinutesAllTime(activityId);
+    final activities = context.watch<ActivitiesController>().activities;
+    final activity = activities.where((a) => a.id == activityId).firstOrNull;
+    final initialMinutes = activity?.initialMinutes ?? 0;
+    final totalMinutes =
+        initialMinutes + sessions.totalMinutesAllTime(activityId);
     final todayMinutes = sessions.totalMinutesToday(activityId);
     final thisWeekMinutes = ActivityDetailsUtils.minutesThisWeek(
       entries: sessions.entries,
@@ -56,9 +61,9 @@ class ActivityStatsBlock extends StatelessWidget {
         if (etaDays == null) ...[
           Text(
             'No data yet 👀',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
@@ -71,9 +76,9 @@ class ActivityStatsBlock extends StatelessWidget {
             children: [
               Text(
                 '$etaDays days',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(width: 8),
               Padding(
@@ -89,10 +94,7 @@ class ActivityStatsBlock extends StatelessWidget {
 
         const SizedBox(height: 16),
 
-        ProgressBar(
-          totalMinutesAllTime: totalMinutes,
-          color: accent,
-        ),
+        ProgressBar(totalMinutesAllTime: totalMinutes, color: accent),
 
         const SizedBox(height: 12),
 
@@ -134,6 +136,11 @@ class ActivityStatsBlock extends StatelessWidget {
           'Today: ${ActivityDetailsUtils.formatHoursMinutes(todayMinutes)}',
           style: Theme.of(context).textTheme.bodySmall,
         ),
+        if (initialMinutes > 0)
+          Text(
+            'Existing experience: ${ActivityDetailsUtils.formatHoursMinutes(initialMinutes)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
       ],
     );
   }
@@ -166,9 +173,9 @@ class _MiniTile extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
 

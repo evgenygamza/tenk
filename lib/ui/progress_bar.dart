@@ -23,7 +23,7 @@ class ProgressBar extends StatelessWidget {
 
     final denom = goalMinutes - prevMinutes;
     final progress = denom <= 0
-        ? 0.0
+        ? 1.0
         : ((total - prevMinutes) / denom).clamp(0.0, 1.0);
 
     return Column(

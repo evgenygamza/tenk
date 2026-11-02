@@ -28,6 +28,32 @@ flutter run
 flutter test
 ```
 
+## Existing experience
+
+Open an activity and choose **Existing experience** in the Entries section or
+the app bar menu. Estimate prior practice from years, months, and average hours
+per week, or enter a known total in hours and minutes. Estimates use 4.345 weeks
+per month and round once to the nearest minute; decimal points and commas are
+accepted for weekly hours. Duration is limited to 100 years (months: 0–11),
+and weekly hours must be above 0 and no more than 168.
+
+Saving **replaces** the activity's prior experience; it does not add another
+copy. Reopen the dialog to correct the total, or enter zero hours and minutes
+to clear it. Prior experience contributes to all-time totals, progress, and
+the remaining time to a goal on Dashboard and Activity Details. Today, weekly
+totals, recent pace, charts, and History use tracked sessions only. ETA combines
+the remaining goal with the pace of recent sessions, so prior experience alone
+does not produce a practice pace.
+
+The value is persisted as `initialMinutes` in `activities.json`; older activities
+without the field start at zero. Existing session records are preserved. Older
+imports stored as ordinary sessions are not automatically reclassified: free-text
+notes cannot reliably identify them. This task does not add an experience prompt
+to the activity creation flow.
+
+Verification commands and recorded results are in
+[`docs/testing/backlog-test-suite.md`](docs/testing/backlog-test-suite.md).
+
 ## Project Structure (draft)
 - `lib/` — app code
 - `test/` — unit & widget tests

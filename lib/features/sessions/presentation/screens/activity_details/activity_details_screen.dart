@@ -12,10 +12,9 @@ import 'package:tenk/features/timer/presentation/widgets/activity_timer_block.da
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/activity_auto_pause_banner.dart';
 import 'package:tenk/features/sessions/presentation/screens/activity_details/activity_details_actions.dart';
 
-import 'package:tenk/features/sessions/presentation/widgets/activity_details/import_experience_dialog.dart';
 import 'package:tenk/features/sessions/presentation/widgets/activity_details/add_manual_dialog.dart';
 
-enum _ActivityMenuAction { rename, changeColor, delete }
+enum _ActivityMenuAction { rename, changeColor, delete, addExistingExperience }
 
 class ActivityDetailsScreen extends StatefulWidget {
   final String activityId;
@@ -59,8 +58,8 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
 
     if (idx == -1) return Theme.of(context).colorScheme.primary;
 
-    return activityPalette[
-    a.activities[idx].colorIndex % activityPalette.length];
+    return activityPalette[a.activities[idx].colorIndex %
+        activityPalette.length];
   }
 
   String _titleFromContext(BuildContext context) {
@@ -87,7 +86,9 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
     return base.copyWith(
       colorScheme: activityScheme,
       filledButtonTheme: FilledButtonThemeData(style: filledStyle),
-      dialogTheme: base.dialogTheme.copyWith(surfaceTintColor: Colors.transparent),
+      dialogTheme: base.dialogTheme.copyWith(
+        surfaceTintColor: Colors.transparent,
+      ),
     );
   }
 
@@ -113,18 +114,37 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
             PopupMenuButton<_ActivityMenuAction>(
               onSelected: (a) async {
                 switch (a) {
+                  case _ActivityMenuAction.addExistingExperience:
+                    await ActivityDetailsActions.addExistingExperience(
+                      context,
+                      activityId: widget.activityId,
+                    );
+                    break;
                   case _ActivityMenuAction.rename:
-                    await ActivityDetailsActions.rename(context, activityId: widget.activityId);
+                    await ActivityDetailsActions.rename(
+                      context,
+                      activityId: widget.activityId,
+                    );
                     break;
                   case _ActivityMenuAction.changeColor:
-                    await ActivityDetailsActions.changeColor(context, activityId: widget.activityId);
+                    await ActivityDetailsActions.changeColor(
+                      context,
+                      activityId: widget.activityId,
+                    );
                     break;
                   case _ActivityMenuAction.delete:
-                    await ActivityDetailsActions.delete(context, activityId: widget.activityId);
+                    await ActivityDetailsActions.delete(
+                      context,
+                      activityId: widget.activityId,
+                    );
                     break;
                 }
               },
               itemBuilder: (ctx) => const [
+                PopupMenuItem(
+                  value: _ActivityMenuAction.addExistingExperience,
+                  child: Text('Existing experience…'),
+                ),
                 PopupMenuItem(
                   value: _ActivityMenuAction.rename,
                   child: Text('Rename'),
@@ -154,24 +174,16 @@ class _ActivityDetailsScreenState extends State<ActivityDetailsScreen> {
               ),
               ActivityAutoPauseBanner(activityId: widget.activityId),
               const SizedBox(height: 16),
-              ActivityTimerBlock(
-                activityId: widget.activityId,
-                accent: accent,
-              ),
+              ActivityTimerBlock(activityId: widget.activityId, accent: accent),
               const SizedBox(height: 16),
               ActivityEntriesBlock(
                 activityId: widget.activityId,
                 entries: entries,
-                onImportExperience: () async {
-                  final result = await ImportExperienceDialog.open(context);
-                  if (!context.mounted || result == null) return;
-
-                  await context.read<SessionsController>().addManual(
-                    widget.activityId,
-                    result.minutes,
-                    note: result.note,
-                  );
-                },
+                onImportExperience: () =>
+                    ActivityDetailsActions.addExistingExperience(
+                      context,
+                      activityId: widget.activityId,
+                    ),
 
                 onAddManual: () async {
                   final result = await AddManualDialog.open(context);
