@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_placeholder_screen.dart';
+import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
+import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/features/onboarding/presentation/screens/welcome_screen.dart';
+
+class _NoopRepository implements FirstActivityRepository {
+  @override
+  Future<String?> loadName() async => null;
+
+  @override
+  Future<void> saveName(String name) async {}
+}
 
 void main() {
   testWidgets('shows the Welcome message and one primary action', (
     tester,
   ) async {
-    await tester.pumpWidget(const App());
+    await tester.pumpWidget(App(firstActivityRepository: _NoopRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('TENK'), findsOneWidget);
@@ -18,16 +27,13 @@ void main() {
   });
 
   testWidgets('Start opens the first-activity step', (tester) async {
-    await tester.pumpWidget(const App());
+    await tester.pumpWidget(App(firstActivityRepository: _NoopRepository()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(CreateActivityPlaceholderScreen.screenKey),
-      findsOneWidget,
-    );
+    expect(find.byKey(CreateActivityScreen.screenKey), findsOneWidget);
     expect(find.text('Первое занятие'), findsOneWidget);
   });
 
@@ -39,7 +45,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(const App());
+    await tester.pumpWidget(App(firstActivityRepository: _NoopRepository()));
     await tester.pumpAndSettle();
 
     expect(find.byKey(WelcomeScreen.startButtonKey), findsOneWidget);

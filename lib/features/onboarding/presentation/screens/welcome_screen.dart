@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_placeholder_screen.dart';
+import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
 import 'package:tenk/features/onboarding/presentation/widgets/uphill_path_illustration.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -67,9 +67,9 @@ class WelcomeScreen extends StatelessWidget {
                       FilledButton(
                         key: startButtonKey,
                         onPressed: () {
-                          Navigator.of(context).pushNamed(
-                            CreateActivityPlaceholderScreen.routeName,
-                          );
+                          Navigator.of(
+                            context,
+                          ).pushNamed(CreateActivityScreen.routeName);
                         },
                         child: const Text('Начать'),
                       ),

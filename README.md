@@ -12,8 +12,10 @@ The current MVP is being rebuilt around one focused path:
 Timer sessions, history, settings, statistics, and workshop evolution are
 deferred to later stages.
 
-The first-launch Welcome screen is implemented. Its primary action currently
-opens the placeholder for first-activity creation, which is the next MVP step.
+The first-launch Welcome screen and first-activity form are implemented. The
+form accepts one required name, saves it locally, prevents duplicate submits,
+and allows retrying a failed save. A successful save currently opens a minimal
+home placeholder; the real home and repeat-launch routing are the next MVP step.
 
 ## Development
 
