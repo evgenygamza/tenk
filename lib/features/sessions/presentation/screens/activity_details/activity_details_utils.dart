@@ -134,15 +134,10 @@ class ActivityDetailsAggregate {
     required List<SessionEntry> entries,
     required String activityId,
     int months = 12,
+    DateTime? now,
   }) {
-    final now = DateTime.now();
-    final thisMonth = DateTime(now.year, now.month, 1);
-
-    DateTime addMonths(DateTime d, int delta) {
-      final y = d.year + ((d.month - 1 + delta) ~/ 12);
-      final m = ((d.month - 1 + delta) % 12) + 1;
-      return DateTime(y, m, 1);
-    }
+    final n = now ?? DateTime.now();
+    final thisMonth = DateTime(n.year, n.month, 1);
 
     final map = <DateTime, int>{}; // monthStart -> minutes
 
@@ -154,7 +149,8 @@ class ActivityDetailsAggregate {
 
     final out = <ActivityChartBar>[];
     for (var i = months - 1; i >= 0; i--) {
-      final mStart = addMonths(thisMonth, -i);
+      // DateTime normalizes months across year boundaries, including month 0.
+      final mStart = DateTime(thisMonth.year, thisMonth.month - i, 1);
       final minutes = map[mStart] ?? 0;
       out.add(ActivityChartBar(label: ActivityDetailsFormat.monthLabel(mStart), minutes: minutes));
     }
@@ -309,10 +305,12 @@ class ActivityDetailsUtils {
     required List<SessionEntry> entries,
     required String activityId,
     int months = 12,
+    DateTime? now,
   }) =>
       ActivityDetailsAggregate.monthlyBars(
         entries: entries,
         activityId: activityId,
         months: months,
+        now: now,
       );
 }

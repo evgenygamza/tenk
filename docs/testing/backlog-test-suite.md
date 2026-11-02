@@ -64,3 +64,38 @@ not exercised by widget tests. Persistence is covered by JSON round-trip reposit
 tests; rendering and keyboard constraints use simulated viewports. No claim is made
 that the full branch's unrelated Activity Details redesign has been accepted on a
 physical device.
+
+## Monthly chart year boundary — Todoist 6hvXQwVjQQHVJwRR
+
+Acceptance criterion: the monthly chart shows the requested calendar-month window
+in chronological order, including months in previous years. Months without entries
+have zero minutes; future months, older entries, and other activities are excluded.
+The calculation accepts an optional `now` for deterministic tests and uses the
+current local date in the app.
+
+Preconditions: Flutter 3.41.0 / Dart 3.11.0 and resolved project dependencies.
+Command: `flutter test --no-pub test/activity_details_aggregate_test.dart --reporter expanded`.
+
+- MONTH-01: at November 2, 2026, use a 12-month window with December 2025 = 30
+  minutes, November 2026 = 45, December 2026 = 999, November 2025 = 100, and
+  another activity's December 2025 = 100. Expect December 2025 through November
+  2026, with 30 minutes in the first bar, 45 in the last, and 75 in total.
+- MONTH-02: at January 15, 2026, use a 3-month window with November 2025 = 20,
+  December 2025 = 40, January 2026 = 10. Expect labels `Nov`, `Dec`, `2026 Jan`
+  and minutes `[20, 40, 10]`.
+
+Execution on 2026-11-02, macOS, working tree based on `7920b64`:
+
+- Before the fix: **FAIL**, both regressions reproduced. MONTH-01 returned 999
+  instead of 30; MONTH-02 returned `[0, 0, 10]` instead of `[20, 40, 10]`.
+- After the fix: **PASS**, both scenarios passed as part of
+  `flutter test --no-pub --reporter expanded`: `00:02 +34: All tests passed!`.
+  The full suite contains 32 existing tests plus these two regressions.
+- **PASS:** `flutter analyze --no-pub`: `No issues found!`.
+- **PASS:** `bash -n scripts/run-ios-simulator.sh` and `git diff --check`.
+
+The ordinary `flutter test` suite is the verification target. The earlier
+`flutter run` attempt on the iOS simulator had two failures in the existing
+dialog tests (semantics-handle cleanup and a missed tap). Those live-mode issues
+are not fixed by this calendar correction; full device-level testing is tracked
+in Todoist task `6hvfJrHF5GgQQh72`.
