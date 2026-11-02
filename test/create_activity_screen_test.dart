@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
-import 'package:tenk/features/activities/presentation/screens/home_placeholder_screen.dart';
+import 'package:tenk/features/activities/presentation/screens/home_screen.dart';
 import 'package:tenk/features/onboarding/presentation/screens/welcome_screen.dart';
 
 class _FakeRepository implements FirstActivityRepository {
@@ -67,8 +67,12 @@ void main() {
 
     expect(repository.saveCalls, ['Гитара']);
     expect(repository.storedName, 'Гитара');
-    expect(find.byKey(HomePlaceholderScreen.screenKey), findsOneWidget);
+    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
+    expect(
+      tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
+      isFalse,
+    );
   });
 
   testWidgets('ignores a repeated submit while saving', (tester) async {
@@ -88,7 +92,7 @@ void main() {
 
     repository.pendingSave!.complete();
     await tester.pumpAndSettle();
-    expect(find.byKey(HomePlaceholderScreen.screenKey), findsOneWidget);
+    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
   });
 
   testWidgets('shows a save error and allows retry', (tester) async {
@@ -110,7 +114,7 @@ void main() {
 
     expect(repository.saveCalls, ['Рисование', 'Рисование']);
     expect(repository.storedName, 'Рисование');
-    expect(find.byKey(HomePlaceholderScreen.screenKey), findsOneWidget);
+    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
   });
 
   testWidgets('form remains usable on a small iPhone viewport', (tester) async {
