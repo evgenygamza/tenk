@@ -23,6 +23,49 @@ flutter pub get
 flutter run
 ```
 
+### iOS Simulator (macOS)
+
+Install Xcode with an iOS Simulator runtime, CocoaPods, Python 3, and the Flutter
+version specified in `.fvmrc` (3.41.0). Check the setup with `flutter doctor`.
+From the repository root, run:
+
+```bash
+bash scripts/run-ios-simulator.sh
+```
+
+This uses an already booted iPhone simulator, or boots the first available iPhone
+simulator, opens Simulator, and builds and runs the current working tree. Flutter
+resolves dependencies automatically. The first build can take several minutes.
+Press `r` in the terminal to reload changes, `R` to restart the app, or `q` to stop.
+To choose a specific simulator, list devices with `xcrun simctl list devices available`
+and pass its UDID as the script's only argument.
+
+The script prints the branch and commit and never switches branches. Before
+checking a Todoist task, use the branch and commit specified in its handoff;
+`git status --short` shows any additional local changes included in the run.
+
+### Physical iPhone
+
+1. Connect and unlock the iPhone, trust the Mac, and enable **Developer Mode** in
+   Settings > Privacy & Security (restart the phone when prompted).
+2. Open `ios/Runner.xcworkspace` in Xcode. Add your Apple account in Xcode settings.
+   Under Runner > Signing & Capabilities, select your development team, enable
+   automatic signing, and use a unique bundle identifier for your app.
+3. Run `flutter devices` to find the physical iPhone's device ID, then run
+   `flutter run -d <device-id>` for development with hot reload.
+4. To test launching from the home-screen icon without the Mac attached, install
+   a release build with `flutter run --release -d <device-id>`. After installation,
+   detach with `d`, disconnect the cable, and reopen TenK from its icon.
+
+A free personal Apple developer account supports local device testing; its
+provisioning expires and requires periodic rebuilding and reinstalling. Device
+setup and signing must be completed before these commands can succeed. See
+[Flutter's iOS setup guide](https://docs.flutter.dev/platform-integration/ios/setup).
+
+For acceptance, create a test activity and session, close and reopen the app,
+and verify that they remain. Record the branch, commit, device/OS, checks run,
+and any remaining limitations in the Todoist task before requesting acceptance.
+
 ### Test
 ```bash
 flutter test
