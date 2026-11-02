@@ -12,6 +12,9 @@ The current MVP is being rebuilt around one focused path:
 Timer sessions, history, settings, statistics, and workshop evolution are
 deferred to later stages.
 
+The first-launch Welcome screen is implemented. Its primary action currently
+opens the placeholder for first-activity creation, which is the next MVP step.
+
 ## Development
 
 Install Flutter 3.41.0, then run:
