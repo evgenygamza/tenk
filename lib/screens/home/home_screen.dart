@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tenk/features/activities/presentation/screens/practice_screen.dart';
-import 'package:tenk/features/onboarding/presentation/widgets/uphill_path_illustration.dart';
+import 'package:tenk/screens/home/widgets/uphill_path_illustration.dart';
+import 'package:tenk/screens/practice/practice_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({

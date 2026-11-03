@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
+import 'package:tenk/screens/create_activity/create_activity_screen.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _NoopRepository implements FirstActivityRepository {
   @override

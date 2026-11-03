@@ -14,7 +14,21 @@ Tested branch: `task/home-tutorial-timer`.
 | Automated regressions | Current task branch | `flutter test --reporter expanded` | All automated tests pass | PASS — 19 tests |
 | Static analysis | Current task branch | `flutter analyze` | No issues | PASS — no issues found |
 
-The timer is deliberately local to the practice screen. Leaving the screen, persistence, session saving, and history are outside this task.
+At implementation time, the timer was local to the practice screen. Cross-screen continuation is covered by the follow-up task below; persistence after app restart, session saving, and history remain separate work.
+
+## Screen and cross-screen feature structure
+
+Task: `6hvpQv9wwhjW966R` — Реорганизовать структуру экранов и общих функций.
+
+Tested branch: `task/screen-feature-structure`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| Screens are separated from shared features | Current task branch | `flutter test --reporter expanded` | Existing onboarding, creation, Home, and practice widget tests pass with screens imported from their `lib/screens/<screen>/` folders | PASS — 19 tests |
+| Area documentation matches the layout | Current task branch | Review root `README.md` and each screen/feature `README.md` | Tree and short descriptions match the code directories | NOT RUN |
+| Static analysis | Current task branch | `flutter analyze` | No issues | NOT RUN |
+
+The timer is owned by the app and is independent of screen lifetimes. Restoring it after app restart remains deferred.
 
 ## First user path in the iOS simulator
 

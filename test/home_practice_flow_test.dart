@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tenk/features/activities/presentation/screens/home_screen.dart';
-import 'package:tenk/features/activities/presentation/screens/practice_screen.dart';
+import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/practice/practice_screen.dart';
 
 void main() {
-  Future<void> pumpHome(
-    WidgetTester tester, {
-    bool showTutorial = true,
-  }) async {
+  Future<void> pumpHome(WidgetTester tester, {bool showTutorial = true}) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(
-          activityName: 'Гитара',
-          showTutorial: showTutorial,
-        ),
+        home: HomeScreen(activityName: 'Гитара', showTutorial: showTutorial),
       ),
     );
   }
