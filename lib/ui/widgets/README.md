@@ -1,9 +1,13 @@
 # Activities UI widgets
 
+`TranslucentPanel` is the shared standard material surface for overlays and floating
+panels. Use it with the tokens in `lib/app/app_theme.dart` rather than creating
+one-off glass treatments.
+
 The populated activity view is rendered as the selected state of the Activities page; it is not a separate navigation destination. It shows the activity over the
 low-poly island background, with a goal monument, ETA, visual selector, and
 add affordance. `ActivityIsland` uses the same clean island asset as Welcome
-and positions the activity name in the header. It pins a separate
+and positions the activity icon and name in the header. It pins a separate
 `ActivityLandmark` at the summit in artwork coordinates. The 100-hour marker
 and 10,000-hour Greek temple are separate
 illustrated assets with their lettering included. The empty state uses a small

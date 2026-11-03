@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
@@ -10,10 +11,10 @@ import 'package:tenk/ui/widgets/liquid_glass_button.dart';
 
 class _NoopRepository implements FirstActivityRepository {
   @override
-  Future<String?> loadName() async => null;
+  Future<FirstActivity?> loadActivity() async => null;
 
   @override
-  Future<void> saveName(String name) async {}
+  Future<void> saveActivity(FirstActivity activity) async {}
 }
 
 void main() {

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:tenk/app/app_theme.dart';
+import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/ui/widgets/liquid_glass_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+  const WelcomeScreen({super.key, required this.repository});
+
+  final FirstActivityRepository repository;
 
   static const routeName = '/';
   static const startButtonKey = Key('welcome_start_button');
@@ -61,7 +65,7 @@ class WelcomeScreen extends StatelessWidget {
                             'TENK',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF064A35),
+                              color: appInkColor,
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 8,
@@ -110,7 +114,8 @@ class WelcomeScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) => const ActivitiesScreen(),
+                                  builder: (_) =>
+                                      ActivitiesScreen(repository: repository),
                                 ),
                               );
                             },

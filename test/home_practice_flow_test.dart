@@ -69,9 +69,9 @@ void main() {
       expect(find.text('TENK'), findsNothing);
       expect(find.bySemanticsLabel('100 hours'), findsOneWidget);
       expect(find.text('18 days to your goal'), findsOneWidget);
-      expect(find.text('🎸'), findsOneWidget);
-      expect(find.text('🎹'), findsOneWidget);
-      expect(find.text('🏃'), findsOneWidget);
+      expect(find.byIcon(Icons.library_music), findsAtLeastNWidgets(1));
+      expect(find.byIcon(Icons.music_note), findsOneWidget);
+      expect(find.byIcon(Icons.directions_run), findsOneWidget);
       expect(find.byKey(ActivityLandmark.landmarkKey), findsOneWidget);
       expect(
         find.byKey(PopulatedActivitiesView.activitySelectorKey),

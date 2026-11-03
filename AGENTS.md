@@ -8,6 +8,12 @@
   translate or rewrite user data to enforce the UI language.
 - Keep agent-maintained documentation in English.
 
+## Design system
+
+- Follow `docs/design-system.md` when adding or changing screens, overlays, or
+  reusable UI components. Keep shared visual values in `lib/app/app_theme.dart`
+  and shared components in `lib/ui/widgets/`.
+
 ## Backlog and project tracking
 
 - GitHub Issues and the TenK GitHub Project are the source of truth for the project backlog, priorities, and task status.

@@ -2,12 +2,13 @@
 
 One page with empty and populated states. Welcome opens the empty state, which
 has a visible back button to return to Welcome; a saved activity opens the
-populated state. In the empty state, the add button
-currently previews a non-persistent sample activity so the populated layout
-can be reviewed. Connecting it to the first-activity form is tracked in issue
-#59.
+populated state. The empty-state add button opens the first-activity form as an
+glass-panel overlay on this page. The form saves a selected monochrome icon
+and a name of up to 40 visible characters; cancel returns to the empty state
+without saving.
 
-The populated state shows the current activity and its visual goal summary.
+The populated state shows the current activity name and monochrome icon with
+its visual goal summary.
 `ActivityIsland` uses the same clean island background as Welcome and anchors a
 separate `ActivityLandmark` at the summit using artwork coordinates. The 100-
 hour marker and 10,000-hour Greek temple are distinct illustrated assets with

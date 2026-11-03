@@ -1,5 +1,26 @@
 # Backlog verification
 
+## First activity creation from Activities
+
+Task: `#59` — Подключить создание первого занятия из экрана активностей.
+
+Branch: `issue-59-embedded-activity-creation`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #59 — Add opens an embedded form | Fresh app data; Welcome is visible | Select Get Started, then `+` | The form overlays empty Activities without opening a separate route | PASS |
+| #59 — Form matches the white glass panel style | Activities background is visible; form overlay is open | Inspect the form over the island artwork | White translucent panel keeps the artwork subtly visible; compact search, filters, and icon tiles use the documented foreground and accents | PASS |
+| #59 — Cancel preserves the empty state | Form is open; no saved activity | Select Cancel | The form closes and empty Activities remains; nothing is saved | PASS |
+| #59 — Icon and name are saved | Form is open; icon `Instrument`, name `Гитара` | Search or filter the icon catalog, select Instrument, enter name, select Save | Populated Activities shows the monochrome icon and `Гитара`; repository stores the icon ID and name | PASS |
+| #59 — Icon catalog scrolls | Form is open on a compact viewport with no search filter | Scroll inside the icon grid from first to last row | Every catalog icon can be reached and selected; the scrollbar shows the current position | PASS |
+| #59 — Name is limited to 40 visible characters | Form is open | Enter 41 ASCII characters, then 41 composed `é` graphemes | Input is limited to 40 user-perceived characters and no layout error occurs | PASS |
+| #59 — Saved activity restores after relaunch | Save icon `Instrument` and name `Гитара` | Fully restart the app | Activities opens directly with the same icon and name; Welcome does not appear | PASS |
+| #59 — Automated regressions | Current task branch | `flutter test --reporter expanded` | All automated tests pass | PASS — 31 tests |
+| #59 — Static analysis | Current task branch | `flutter analyze` | No issues found | PASS |
+| #59 — iOS build and launch | Available iPhone simulator | `bash scripts/run-ios-simulator.sh` | Build succeeds and the app launches; overlay remains usable on compact portrait | PASS |
+
+The approved checks passed for issue `#59` in `Testing`.
+
 ## Home tutorial and minimal timer
 
 Task: `6hvg5P2gJ99g4q82` — Сделать главный экран с туториалом и минимальным таймером.
