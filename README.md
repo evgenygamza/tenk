@@ -1,44 +1,100 @@
 # TenK
 
-A simple app to track and grow skills with a “10,000 hours” style practice log.
+TenK is a calm practice tracker that helps people spend time on a chosen
+activity and see their progress accumulate.
 
-## Goals (MVP)
-- Manual time tracking (start/stop timers + add sessions manually)
-- Simple stats (daily/weekly totals, streaks)
-- Reminders/notifications
-- Sign in (Google / Apple) — after MVP
+The current MVP is being rebuilt around one focused path:
 
-## Tech
-- Flutter (Dart)
-- Target: iOS + Android
+1. Welcome.
+2. Create the first activity.
+3. Open Home and begin a practice timer.
 
-## Getting Started
-### Prerequisites
-- Flutter SDK installed
-- (Recommended) FVM to pin Flutter version
+## Code layout
 
-### Run
+```text
+lib/
+├── app/                    # App setup and theme
+├── features/
+│   └── activities/         # Activity data and repository
+├── screens/
+│   ├── create_activity/    # First activity form
+│   ├── home/               # Home screen layout and behavior
+│   ├── practice/           # Practice and timer display
+│   └── welcome/            # First-launch welcome
+├── ui/                     # Reusable app-wide widgets
+└── main.dart               # App entry point
+```
+
+Each screen and shared feature has a short README in its directory. Keep screen
+composition and behavior with its screen; place visual widgets in `lib/ui/`.
+
+Welcome uses a full-screen local island illustration, English overlay copy, and
+the shared Liquid Glass action button. The illustration stays separate from
+the accessible text and interactive controls.
+
+Home gives the first created activity a clear next step: a brief tutorial can
+be dismissed, then `Начать занятие` opens Practice. The current timer only
+runs while Practice is open; a shared timer is planned separately. Saving a
+session, history, settings, statistics, and workshop evolution are deferred.
+
+On startup, TenK loads the first activity from local storage before choosing a
+screen. Without an activity (including a blank stored name), it opens Welcome
+and the first-activity form. The form accepts one required name, saves it locally,
+prevents duplicate submits, and allows retrying a failed save.
+
+A saved activity opens Home immediately, including after an app restart. Home
+shows the activity name and the calm low-poly uphill-path illustration. Saving
+the first activity clears the onboarding navigation stack. A failed startup
+read shows a retry action without treating the failure as an empty activity or
+overwriting saved data.
+
+Startup routing, loading and retry states, activity display, compact layouts,
+and the create/save flow are covered by widget and repository tests. Verification
+scenarios and execution evidence are in [the test suite](docs/testing/backlog-test-suite.md).
+
+## Development
+
+Install Flutter 3.41.0. From the repository root, use these commands to prepare
+the project and inspect the local Flutter setup:
+
 ```bash
 flutter pub get
+flutter doctor -v
+flutter devices
+```
+
+Run the automated checks with:
+
+```bash
+# Run all widget and repository tests with readable output
+flutter test --reporter expanded
+
+# Run one test file
+flutter test test/app_test.dart
+
+# Check Dart and Flutter lints
+flutter analyze
+
+# Format Dart sources
+dart format lib test
+```
+
+Run on the default connected device with:
+
+```bash
 flutter run
 ```
 
-### Test
+On macOS, the iOS helper boots an available iPhone simulator, opens Simulator,
+and runs the current working tree. Pass a simulator UDID to select a device:
+
 ```bash
-flutter test
+bash scripts/run-ios-simulator.sh
+bash scripts/run-ios-simulator.sh <simulator-UDID>
 ```
 
-## Project Structure (draft)
-- `lib/` — app code
-- `test/` — unit & widget tests
-- `integration_test/` — integration tests
-- `docs/` — notes & decisions
+List available iOS simulators and their UDIDs with:
 
-## Roadmap
-See `docs/roadmap.md` (to be added).
-
-## Contributing
-Issues and PRs are welcome. If you plan a larger change, please open an issue first to align on direction.
-
-## License
-GPL-3.0
+```bash
+xcrun simctl list devices available
+```

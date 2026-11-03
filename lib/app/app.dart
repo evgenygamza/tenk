@@ -1,51 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:tenk/app/app_theme.dart';
+import 'package:tenk/features/activities/data/repositories/shared_preferences_first_activity_repository.dart';
+import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
+import 'package:tenk/screens/create_activity/create_activity_screen.dart';
+import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/welcome/welcome_screen.dart';
 
-import 'package:tenk/features/activities/data/repositories/activities_repository_impl.dart';
-import 'package:tenk/features/activities/data/sources/activities_local_data_source.dart';
-import 'package:tenk/features/activities/presentation/state/activities_controller.dart';
+class App extends StatefulWidget {
+  const App({super.key, this.firstActivityRepository});
 
-import 'package:tenk/features/sessions/data/repositories/sessions_repository_impl.dart';
-import 'package:tenk/features/sessions/data/sources/sessions_local_data_source.dart';
-import 'package:tenk/features/sessions/presentation/state/sessions_controller.dart';
-import 'package:tenk/features/timer/presentation/state/timer_controller.dart';
-import 'package:tenk/features/timer/presentation/state/timer_storage.dart';
+  final FirstActivityRepository? firstActivityRepository;
 
-import 'package:tenk/app/tabs_shell.dart';
+  @override
+  State<App> createState() => _AppState();
+}
 
-class App extends StatelessWidget {
-  const App({super.key});
+class _AppState extends State<App> {
+  late final FirstActivityRepository _repository;
+  late Future<({String? name, bool failed})> _activity;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository =
+        widget.firstActivityRepository ??
+        SharedPreferencesFirstActivityRepository();
+    _activity = _loadActivity();
+  }
+
+  Future<({String? name, bool failed})> _loadActivity() async {
+    try {
+      return (name: await _repository.loadName(), failed: false);
+    } catch (_) {
+      return (name: null, failed: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final sessionsRepo = SessionsRepositoryImpl(SessionsLocalDataSource());
-    final activitiesRepo = ActivitiesRepositoryImpl(
-      ActivitiesLocalDataSource(),
-    );
-
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) {
-            final c = TimerController(TimerStorage());
-            c.init();
-            return c;
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'TenK',
+      theme: buildAppTheme(),
+      home: FutureBuilder<({String? name, bool failed})>(
+        future: _activity,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.data!.failed) {
+            return Scaffold(
+              body: SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Не удалось загрузить занятие',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: () => setState(() {
+                            _activity = _loadActivity();
+                          }),
+                          child: const Text('Попробовать снова'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+          final name = snapshot.data!.name;
+          return name == null || name.trim().isEmpty
+              ? const WelcomeScreen()
+              : HomeScreen(activityName: name);
+        },
+      ),
+      routes: {
+        CreateActivityScreen.routeName: (context) => CreateActivityScreen(
+          repository: _repository,
+          onSaved: (activityName) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute<void>(
+                builder: (_) => HomeScreen(
+                  activityName: activityName,
+                  showTutorial: true,
+                ),
+              ),
+              (_) => false,
+            );
           },
         ),
-        ChangeNotifierProvider(create: (_) => SessionsController(sessionsRepo)),
-        ChangeNotifierProvider(
-          create: (_) => ActivitiesController(activitiesRepo),
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'TenK',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF4F46E5),
-        ),
-        home: const TabsShell(),
-      ),
+      },
     );
   }
 }
