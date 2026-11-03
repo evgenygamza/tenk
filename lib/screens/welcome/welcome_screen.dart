@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
-import 'package:tenk/features/onboarding/presentation/widgets/uphill_path_illustration.dart';
+import 'package:tenk/screens/create_activity/create_activity_screen.dart';
+import 'package:tenk/screens/home/widgets/uphill_path_illustration.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

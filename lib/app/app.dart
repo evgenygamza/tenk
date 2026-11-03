@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/data/repositories/shared_preferences_first_activity_repository.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
-import 'package:tenk/features/activities/presentation/screens/home_screen.dart';
-import 'package:tenk/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:tenk/screens/create_activity/create_activity_screen.dart';
+import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class App extends StatefulWidget {
   const App({super.key, this.firstActivityRepository});
@@ -90,7 +90,10 @@ class _AppState extends State<App> {
           onSaved: (activityName) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute<void>(
-                builder: (_) => HomeScreen(activityName: activityName),
+                builder: (_) => HomeScreen(
+                  activityName: activityName,
+                  showTutorial: true,
+                ),
               ),
               (_) => false,
             );

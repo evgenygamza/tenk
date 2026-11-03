@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/features/activities/presentation/screens/create_activity_screen.dart';
-import 'package:tenk/features/activities/presentation/screens/home_screen.dart';
-import 'package:tenk/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:tenk/screens/create_activity/create_activity_screen.dart';
+import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _FakeRepository implements FirstActivityRepository {
   final saveCalls = <String>[];
@@ -68,6 +68,7 @@ void main() {
     expect(repository.saveCalls, ['Гитара']);
     expect(repository.storedName, 'Гитара');
     expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
+    expect(find.byKey(HomeScreen.tutorialKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     expect(
       tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
