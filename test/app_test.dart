@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
@@ -10,20 +11,21 @@ import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _Repository implements FirstActivityRepository {
-  String? name;
+  FirstActivity? activity;
   int loads = 0;
   bool fail = false;
-  Completer<String?>? pending;
+  Completer<FirstActivity?>? pending;
 
   @override
-  Future<String?> loadName() async {
+  Future<FirstActivity?> loadActivity() async {
     loads++;
     if (fail) throw Exception('read failed');
-    return pending == null ? name : pending!.future;
+    return pending == null ? activity : pending!.future;
   }
 
   @override
-  Future<void> saveName(String name) async => this.name = name;
+  Future<void> saveActivity(FirstActivity activity) async =>
+      this.activity = activity;
 }
 
 void main() {
@@ -42,7 +44,7 @@ void main() {
     expect(repository.loads, 1);
   });
 
-  testWidgets('empty Activities previews one mock activity in memory', (
+  testWidgets('empty Activities opens and cancels the embedded form', (
     tester,
   ) async {
     final repository = _Repository();
@@ -55,21 +57,42 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ActivitiesScreen), findsOneWidget);
-    expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
-    expect(find.text('Guitar'), findsOneWidget);
-    expect(repository.name, isNull);
+    expect(find.byType(CreateActivityScreen), findsOneWidget);
+    expect(find.byKey(ActivitiesScreen.createOverlayKey), findsOneWidget);
+    expect(repository.activity, isNull);
 
-    await tester.tap(find.byKey(PopulatedActivitiesView.previewBackKey));
+    await tester.tap(find.byKey(CreateActivityScreen.cancelButtonKey));
     await tester.pumpAndSettle();
     expect(find.byKey(ActivitiesScreen.emptyStateKey), findsOneWidget);
+    expect(find.byType(CreateActivityScreen), findsNothing);
   });
 
+  testWidgets(
+    'system back cancels the embedded form before leaving Activities',
+    (tester) async {
+      await tester.pumpWidget(App(firstActivityRepository: _Repository()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ActivitiesScreen.addButtonKey));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CreateActivityScreen), findsNothing);
+      expect(find.byKey(ActivitiesScreen.emptyStateKey), findsOneWidget);
+    },
+  );
+
   testWidgets('waits for loading without flashing onboarding', (tester) async {
-    final repository = _Repository()..pending = Completer<String?>();
+    final repository = _Repository()..pending = Completer<FirstActivity?>();
     await tester.pumpWidget(App(firstActivityRepository: repository));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byType(WelcomeScreen), findsNothing);
-    repository.pending!.complete('Гитара');
+    repository.pending!.complete(
+      const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
@@ -83,19 +106,26 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
     await tester.pumpAndSettle();
-    _openCreateActivityRoute(tester);
+    await tester.tap(find.byKey(ActivitiesScreen.addButtonKey));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(CreateActivityScreen.nameFieldKey),
       'Гитара',
     );
-    await tester.tap(find.byKey(CreateActivityScreen.saveButtonKey));
+    await tester.tap(
+      find.byKey(const ValueKey('create_activity_icon_instrument')),
+    );
+    final saveButton = find.byKey(CreateActivityScreen.saveButtonKey);
+    await tester.ensureVisible(saveButton);
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
     await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
     expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
+    expect(find.byIcon(Icons.library_music), findsAtLeastNWidgets(1));
     expect(find.byType(WelcomeScreen), findsNothing);
     expect(
       tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
@@ -106,7 +136,10 @@ void main() {
 
   testWidgets('blank stored name keeps creation accessible', (tester) async {
     await tester.pumpWidget(
-      App(firstActivityRepository: _Repository()..name = '  '),
+      App(
+        firstActivityRepository: _Repository()
+          ..activity = const FirstActivity(name: '  ', iconId: 'sparkles'),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.byType(WelcomeScreen), findsOneWidget);
@@ -116,7 +149,7 @@ void main() {
     tester,
   ) async {
     final repository = _Repository()
-      ..name = 'Рисование'
+      ..activity = const FirstActivity(name: 'Рисование', iconId: 'art')
       ..fail = true;
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
@@ -156,7 +189,10 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       const name = 'Рисование и изучение пейзажей';
       await tester.pumpWidget(
-        App(firstActivityRepository: _Repository()..name = name),
+        App(
+          firstActivityRepository: _Repository()
+            ..activity = FirstActivity(name: name, iconId: 'art'),
+        ),
       );
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(name));
@@ -164,14 +200,5 @@ void main() {
       expect(find.byType(PopulatedActivitiesView), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
-  );
-}
-
-void _openCreateActivityRoute(WidgetTester tester) {
-  final navigator = tester.state<NavigatorState>(find.byType(Navigator));
-  unawaited(
-    navigator
-        .pushNamed<void>(CreateActivityScreen.routeName)
-        .then<void>((_) {}),
   );
 }

@@ -1,5 +1,7 @@
-abstract interface class FirstActivityRepository {
-  Future<String?> loadName();
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
 
-  Future<void> saveName(String name);
+abstract interface class FirstActivityRepository {
+  Future<FirstActivity?> loadActivity();
+
+  Future<void> saveActivity(FirstActivity activity);
 }

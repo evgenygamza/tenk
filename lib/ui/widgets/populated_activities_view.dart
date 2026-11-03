@@ -1,13 +1,17 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:tenk/app/app_theme.dart';
+import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
+import 'package:tenk/ui/widgets/translucent_panel.dart';
 
 class PopulatedActivitiesView extends StatefulWidget {
   const PopulatedActivitiesView({
     super.key,
     required this.activityName,
+    this.activityIconId = 'instrument',
     this.showTutorial = false,
     this.onPreviewBack,
   });
@@ -25,6 +29,7 @@ class PopulatedActivitiesView extends StatefulWidget {
   static const backgroundAsset = ActivityIsland.backgroundAsset;
 
   final String activityName;
+  final String activityIconId;
   final bool showTutorial;
   final VoidCallback? onPreviewBack;
 
@@ -97,7 +102,7 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                                 key: PopulatedActivitiesView.previewBackKey,
                                 onPressed: widget.onPreviewBack,
                                 icon: const Icon(Icons.arrow_back),
-                                color: const Color(0xFF075039),
+                                color: appInkColor,
                                 constraints: const BoxConstraints.tightFor(
                                   width: 40,
                                   height: 40,
@@ -107,17 +112,30 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                             else
                               const SizedBox(width: 40, height: 40),
                             Expanded(
-                              child: Text(
-                                widget.activityName,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Color(0xFF075039),
-                                  fontSize: compact ? 23 : 27,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.4,
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    activityIconFor(widget.activityIconId).icon,
+                                    color: appInkColor,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      widget.activityName,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: appInkColor,
+                                        fontSize: compact ? 23 : 27,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(width: 40, height: 40),
@@ -175,7 +193,9 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const _ActivitySelector(),
+                              _ActivitySelector(
+                                selectedIconId: widget.activityIconId,
+                              ),
                               SizedBox(width: compact ? 10 : 14),
                               _AddActivityVisual(compact: compact),
                             ],
@@ -194,46 +214,36 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   }
 
   Widget _tutorialCard(BuildContext context) {
-    return ClipRRect(
+    return TranslucentPanel(
       key: PopulatedActivitiesView.tutorialKey,
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xDDF4EFE3),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.75)),
+      radius: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'First step',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: appInkColor,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'First step',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: const Color(0xFF273128),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Start your first session to begin your journey.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF454E45),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  key: PopulatedActivitiesView.dismissTutorialKey,
-                  onPressed: () => setState(() => _showTutorial = false),
-                  child: const Text('Got it'),
-                ),
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            'Start your first session to begin your journey.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: appInkColor),
           ),
-        ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              key: PopulatedActivitiesView.dismissTutorialKey,
+              onPressed: () => setState(() => _showTutorial = false),
+              child: const Text('Got it'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -275,7 +285,9 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
 }
 
 class _ActivitySelector extends StatelessWidget {
-  const _ActivitySelector();
+  const _ActivitySelector({required this.selectedIconId});
+
+  final String selectedIconId;
 
   @override
   Widget build(BuildContext context) {
@@ -301,14 +313,17 @@ class _ActivitySelector extends StatelessWidget {
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _ActivityEmoji(emoji: '🎸', selected: true),
+              _ActivityIcon(
+                icon: activityIconFor(selectedIconId).icon,
+                selected: true,
+              ),
               _SelectorDivider(),
-              _ActivityEmoji(emoji: '🎹'),
+              const _ActivityIcon(icon: Icons.music_note),
               _SelectorDivider(),
-              _ActivityEmoji(emoji: '🏃'),
+              const _ActivityIcon(icon: Icons.directions_run),
             ],
           ),
         ),
@@ -317,10 +332,10 @@ class _ActivitySelector extends StatelessWidget {
   }
 }
 
-class _ActivityEmoji extends StatelessWidget {
-  const _ActivityEmoji({required this.emoji, this.selected = false});
+class _ActivityIcon extends StatelessWidget {
+  const _ActivityIcon({required this.icon, this.selected = false});
 
-  final String emoji;
+  final IconData icon;
   final bool selected;
 
   @override
@@ -337,7 +352,7 @@ class _ActivityEmoji extends StatelessWidget {
                   shape: BoxShape.circle,
                 )
               : null,
-          child: Text(emoji, style: const TextStyle(fontSize: 29, height: 1)),
+          child: Icon(icon, color: Colors.white, size: 25),
         ),
       ),
     );

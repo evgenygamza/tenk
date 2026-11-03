@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/data/repositories/shared_preferences_first_activity_repository.dart';
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
-import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class App extends StatefulWidget {
@@ -17,7 +17,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   late final FirstActivityRepository _repository;
-  late Future<({String? name, bool failed})> _activity;
+  late Future<({FirstActivity? activity, bool failed})> _activity;
 
   @override
   void initState() {
@@ -28,11 +28,11 @@ class _AppState extends State<App> {
     _activity = _loadActivity();
   }
 
-  Future<({String? name, bool failed})> _loadActivity() async {
+  Future<({FirstActivity? activity, bool failed})> _loadActivity() async {
     try {
-      return (name: await _repository.loadName(), failed: false);
+      return (activity: await _repository.loadActivity(), failed: false);
     } catch (_) {
-      return (name: null, failed: true);
+      return (activity: null, failed: true);
     }
   }
 
@@ -42,7 +42,7 @@ class _AppState extends State<App> {
       debugShowCheckedModeBanner: false,
       title: 'TenK',
       theme: buildAppTheme(),
-      home: FutureBuilder<({String? name, bool failed})>(
+      home: FutureBuilder<({FirstActivity? activity, bool failed})>(
         future: _activity,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -78,28 +78,16 @@ class _AppState extends State<App> {
               ),
             );
           }
-          final name = snapshot.data!.name;
-          return name == null || name.trim().isEmpty
-              ? const WelcomeScreen()
-              : ActivitiesScreen(activityName: name);
+          final activity = snapshot.data!.activity;
+          return activity == null || activity.name.trim().isEmpty
+              ? WelcomeScreen(repository: _repository)
+              : ActivitiesScreen(
+                  activityName: activity.name,
+                  activityIconId: activity.iconId,
+                  repository: _repository,
+                );
         },
       ),
-      routes: {
-        CreateActivityScreen.routeName: (context) => CreateActivityScreen(
-          repository: _repository,
-          onSaved: (activityName) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute<void>(
-                builder: (_) => ActivitiesScreen(
-                  activityName: activityName,
-                  showTutorial: true,
-                ),
-              ),
-              (_) => false,
-            );
-          },
-        ),
-      },
     );
   }
 }

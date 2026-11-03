@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 
 const appCanvasColor = Color(0xFFF4EFE3);
-const appMossColor = Color(0xFF536A49);
-const appInkColor = Color(0xFF273128);
+const appMossColor = Color(0xFF243F2A);
+const appInkColor = Color(0xFF243F2A);
+const appTranslucentPanelColor = Color(0x73FFFFFF);
+const appPanelBorderColor = Color(0x80FFFFFF);
+const appPanelTileColor = Color(0x33FFFFFF);
+const appPanelSelectedTileColor = Color(0x9E9DCF7E);
+const appPanelFieldColor = Color(0x7AFFFFFF);
+const appPanelControlBorderColor = Color(0x73FFFFFF);
+const appPanelRadius = 28.0;
+const appPanelBlurSigma = 16.0;
 
 ThemeData buildAppTheme() {
   final colorScheme =
