@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/data/repositories/shared_preferences_first_activity_repository.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/screens/create_activity/create_activity_screen.dart';
-import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/activities/activities_screen.dart';
+import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class App extends StatefulWidget {
@@ -60,7 +60,7 @@ class _AppState extends State<App> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Не удалось загрузить занятие',
+                          'Could not load your activity',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineLarge,
                         ),
@@ -69,7 +69,7 @@ class _AppState extends State<App> {
                           onPressed: () => setState(() {
                             _activity = _loadActivity();
                           }),
-                          child: const Text('Попробовать снова'),
+                          child: const Text('Try again'),
                         ),
                       ],
                     ),
@@ -81,7 +81,7 @@ class _AppState extends State<App> {
           final name = snapshot.data!.name;
           return name == null || name.trim().isEmpty
               ? const WelcomeScreen()
-              : HomeScreen(activityName: name);
+              : ActivitiesScreen(activityName: name);
         },
       ),
       routes: {
@@ -90,7 +90,7 @@ class _AppState extends State<App> {
           onSaved: (activityName) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute<void>(
-                builder: (_) => HomeScreen(
+                builder: (_) => ActivitiesScreen(
                   activityName: activityName,
                   showTutorial: true,
                 ),

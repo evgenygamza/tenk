@@ -2,6 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+// TODO(#40): Delete this prototype when its shared timer widget is added to Activities.
+/// Temporary screen-local timer retained as a reference for issue #40.
+@Deprecated(
+  'Replace with the Activities timer widget from issue #40, then delete this prototype.',
+)
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({super.key, required this.activityName});
 
@@ -67,12 +72,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Занятие', style: textTheme.bodyLarge),
+                  Text('Activity', style: textTheme.bodyLarge),
                   const SizedBox(height: 8),
                   Text(widget.activityName, style: textTheme.headlineLarge),
                   const SizedBox(height: 48),
                   Text(
-                    _isRunning ? 'Время идёт' : 'Готово к началу',
+                    _isRunning ? 'In progress' : 'Ready to start',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyLarge,
                   ),
@@ -92,12 +97,12 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           ? Icons.pause_rounded
                           : Icons.play_arrow_rounded,
                     ),
-                    label: Text(_isRunning ? 'Поставить на паузу' : 'Начать'),
+                    label: Text(_isRunning ? 'Pause' : 'Start'),
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Пока таймер работает только на этом экране. '
-                    'Сохранение результата появится позже.',
+                    'The timer currently runs only on this screen. '
+                    'Saving sessions will be available later.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodyLarge?.copyWith(fontSize: 15),
                   ),

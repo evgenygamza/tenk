@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tenk/screens/create_activity/create_activity_screen.dart';
+import 'package:tenk/screens/activities/activities_screen.dart';
+import 'package:tenk/screens/activities/widgets/activity_island.dart';
+import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/ui/widgets/liquid_glass_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -7,7 +9,7 @@ class WelcomeScreen extends StatelessWidget {
 
   static const routeName = '/';
   static const startButtonKey = Key('welcome_start_button');
-  static const backgroundAsset = 'assets/images/welcome_background.png';
+  static const backgroundAsset = ActivityIsland.backgroundAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +19,10 @@ class WelcomeScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          ExcludeSemantics(
-            child: Image.asset(backgroundAsset, fit: BoxFit.cover),
+          const ActivityIsland(
+            summitContent: ActivityLandmark(hours: 10000),
+            summitSizeFactor: Size(0.24, 0.11),
+            summitAnchor: ActivityIsland.roadEndpointAnchor,
           ),
           const DecoratedBox(
             decoration: BoxDecoration(
@@ -104,9 +108,11 @@ class WelcomeScreen extends StatelessWidget {
                             key: startButtonKey,
                             label: 'Get Started',
                             onPressed: () {
-                              Navigator.of(
-                                context,
-                              ).pushNamed(CreateActivityScreen.routeName);
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const ActivitiesScreen(),
+                                ),
+                              );
                             },
                           ),
                         ],

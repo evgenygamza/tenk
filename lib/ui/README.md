@@ -7,5 +7,4 @@ behavior with the screen that owns it.
 translucent glass treatment is part of the design. It accepts a label and
 nullable callback so it can also represent a disabled action.
 
-`UphillPathIllustration` is the low-poly Home illustration, kept separate from
-the Home screen layout.
+`PopulatedActivitiesView` renders the filled state inside Activities. `UphillPathIllustration` is a reusable path artwork widget; screen layout and navigation remain in Activities and Welcome.

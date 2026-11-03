@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/screens/create_activity/create_activity_screen.dart';
-import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/screens/activities/activities_screen.dart';
+import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
+import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _Repository implements FirstActivityRepository {
@@ -26,15 +27,41 @@ class _Repository implements FirstActivityRepository {
 }
 
 void main() {
-  testWidgets('first launch opens Welcome and creation', (tester) async {
+  testWidgets('first launch opens Welcome and empty activities', (
+    tester,
+  ) async {
     final repository = _Repository();
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
     expect(find.byType(WelcomeScreen), findsOneWidget);
     await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
     await tester.pumpAndSettle();
-    expect(find.byType(CreateActivityScreen), findsOneWidget);
+    expect(find.byType(ActivitiesScreen), findsOneWidget);
+    expect(find.byKey(ActivitiesScreen.emptyStateKey), findsOneWidget);
+    expect(find.byType(CreateActivityScreen), findsNothing);
     expect(repository.loads, 1);
+  });
+
+  testWidgets('empty Activities previews one mock activity in memory', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(ActivitiesScreen.addButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ActivitiesScreen), findsOneWidget);
+    expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
+    expect(find.text('Guitar'), findsOneWidget);
+    expect(repository.name, isNull);
+
+    await tester.tap(find.byKey(PopulatedActivitiesView.previewBackKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(ActivitiesScreen.emptyStateKey), findsOneWidget);
   });
 
   testWidgets('waits for loading without flashing onboarding', (tester) async {
@@ -44,7 +71,7 @@ void main() {
     expect(find.byType(WelcomeScreen), findsNothing);
     repository.pending!.complete('Гитара');
     await tester.pumpAndSettle();
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     await tester.pump();
     expect(repository.loads, 1);
@@ -56,6 +83,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
     await tester.pumpAndSettle();
+    _openCreateActivityRoute(tester);
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(CreateActivityScreen.nameFieldKey),
       'Гитара',
@@ -65,7 +94,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     expect(find.byType(WelcomeScreen), findsNothing);
     expect(
@@ -91,17 +120,17 @@ void main() {
       ..fail = true;
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
-    expect(find.text('Не удалось загрузить занятие'), findsOneWidget);
+    expect(find.text('Could not load your activity'), findsOneWidget);
     expect(find.byType(WelcomeScreen), findsNothing);
-    expect(find.byType(HomeScreen), findsNothing);
-    await tester.tap(find.text('Попробовать снова'));
+    expect(find.byType(PopulatedActivitiesView), findsNothing);
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
-    expect(find.text('Не удалось загрузить занятие'), findsOneWidget);
+    expect(find.text('Could not load your activity'), findsOneWidget);
     repository.fail = false;
-    await tester.tap(find.text('Попробовать снова'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.text('Рисование'), findsOneWidget);
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(repository.loads, 3);
     expect(tester.takeException(), isNull);
   });
@@ -111,13 +140,13 @@ void main() {
     await tester.pumpWidget(App(firstActivityRepository: repository));
     await tester.pumpAndSettle();
     repository.fail = false;
-    await tester.tap(find.text('Попробовать снова'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.byType(WelcomeScreen), findsOneWidget);
   });
 
   testWidgets(
-    'Home displays a long activity on a small screen with large text',
+    'Activities displays a long activity on a small screen with large text',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(320, 568);
@@ -132,8 +161,17 @@ void main() {
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(name));
       expect(find.text(name), findsOneWidget);
-      expect(find.byType(HomeScreen), findsOneWidget);
+      expect(find.byType(PopulatedActivitiesView), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
+  );
+}
+
+void _openCreateActivityRoute(WidgetTester tester) {
+  final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+  unawaited(
+    navigator
+        .pushNamed<void>(CreateActivityScreen.routeName)
+        .then<void>((_) {}),
   );
 }

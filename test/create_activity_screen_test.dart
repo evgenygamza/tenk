@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
-import 'package:tenk/screens/create_activity/create_activity_screen.dart';
-import 'package:tenk/screens/home/home_screen.dart';
+import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
+import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _FakeRepository implements FirstActivityRepository {
@@ -40,6 +40,13 @@ Future<void> _openCreateActivity(
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(WelcomeScreen.startButtonKey));
   await tester.pumpAndSettle();
+  final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+  unawaited(
+    navigator
+        .pushNamed<void>(CreateActivityScreen.routeName)
+        .then<void>((_) {}),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -50,7 +57,7 @@ void main() {
     await tester.tap(find.byKey(CreateActivityScreen.saveButtonKey));
     await tester.pump();
 
-    expect(find.text('Введи название занятия'), findsOneWidget);
+    expect(find.text('Enter an activity name'), findsOneWidget);
     expect(repository.saveCalls, isEmpty);
   });
 
@@ -67,8 +74,8 @@ void main() {
 
     expect(repository.saveCalls, ['Гитара']);
     expect(repository.storedName, 'Гитара');
-    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
-    expect(find.byKey(HomeScreen.tutorialKey), findsOneWidget);
+    expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
+    expect(find.byKey(PopulatedActivitiesView.tutorialKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     expect(
       tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
@@ -93,7 +100,7 @@ void main() {
 
     repository.pendingSave!.complete();
     await tester.pumpAndSettle();
-    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
+    expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
   });
 
   testWidgets('shows a save error and allows retry', (tester) async {
@@ -115,7 +122,7 @@ void main() {
 
     expect(repository.saveCalls, ['Рисование', 'Рисование']);
     expect(repository.storedName, 'Рисование');
-    expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
+    expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
   });
 
   testWidgets('form remains usable on a small iPhone viewport', (tester) async {

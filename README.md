@@ -3,11 +3,12 @@
 TenK is a calm practice tracker that helps people spend time on a chosen
 activity and see their progress accumulate.
 
-The current MVP is being rebuilt around one focused path:
+The current first-use path is being delivered in steps:
 
 1. Welcome.
-2. Create the first activity.
-3. Open Home and begin a practice timer.
+2. Open the empty Activities screen.
+3. Create the first activity from its add button (issue #59).
+4. Show the populated Activities state; add the timer widget in a later task.
 
 ## Code layout
 
@@ -17,40 +18,51 @@ lib/
 ├── features/
 │   └── activities/         # Activity data and repository
 ├── screens/
-│   ├── create_activity/    # First activity form
-│   ├── home/               # Home screen layout and behavior
-│   ├── practice/           # Practice and timer display
+│   ├── activities/         # Empty and populated Activities states
 │   └── welcome/            # First-launch welcome
-├── ui/                     # Reusable app-wide widgets
+├── ui/
+│   ├── deprecated/         # Practice timer prototype pending #40
+│   └── widgets/            # Reusable and embedded UI
 └── main.dart               # App entry point
 ```
 
-Each screen and shared feature has a short README in its directory. Keep screen
-composition and behavior with its screen; place visual widgets in `lib/ui/`.
+Activities and Welcome are the only top-level screens. The populated Activities
+view is a reusable widget under `lib/ui/widgets/`; the first-activity form lives
+with its feature until it is embedded in Activities by #59.
 
 Welcome uses a full-screen local island illustration, English overlay copy, and
 the shared Liquid Glass action button. The illustration stays separate from
 the accessible text and interactive controls.
 
-Home gives the first created activity a clear next step: a brief tutorial can
-be dismissed, then `Начать занятие` opens Practice. The current timer only
-runs while Practice is open; a shared timer is planned separately. Saving a
+Activities is the main activity page, with empty and populated states. The
+populated state keeps the Start Session control as a visual placeholder. The
+deprecated Practice timer prototype is retained only as a reference until #40
+adds timer controls to Activities. Saving a
 session, history, settings, statistics, and workshop evolution are deferred.
 
 On startup, TenK loads the first activity from local storage before choosing a
-screen. Without an activity (including a blank stored name), it opens Welcome
-and the first-activity form. The form accepts one required name, saves it locally,
+screen. Without an activity (including a blank stored name), it opens Welcome.
+The Welcome action opens the empty Activities screen. Its add button currently
+previews a non-persistent sample activity; issue #59 will connect it to the
+first-activity form. The form accepts one required name, saves it locally,
 prevents duplicate submits, and allows retrying a failed save.
 
-A saved activity opens Home immediately, including after an app restart. Home
-shows the activity name and the calm low-poly uphill-path illustration. Saving
-the first activity clears the onboarding navigation stack. A failed startup
-read shows a retry action without treating the failure as an empty activity or
-overwriting saved data.
+A saved activity opens the populated Activities state, including after an app
+restart. It shows the activity name over the low-poly island background.
+Welcome and Activities share one clean island background. Welcome pins the
+10,000-hour Greek temple to the summit; the empty Activities state pins a
+floating question mark there; the populated state uses a dedicated illustrated
+`ActivityLandmark` for each milestone. The 100-hour marker and 10,000-hour
+temple include their lettering in the artwork. ETA and activity selector are
+visual placeholders for later tasks.
+Saving the first activity clears the onboarding navigation stack. A failed
+startup read shows a retry action without treating the failure as an empty
+activity or overwriting saved data.
 
-Startup routing, loading and retry states, activity display, compact layouts,
-and the create/save flow are covered by widget and repository tests. Verification
-scenarios and execution evidence are in [the test suite](docs/testing/backlog-test-suite.md).
+Startup routing, empty and populated activity states, loading and retry states,
+compact layouts, and the create/save flow are covered by widget and repository
+tests. Verification scenarios and execution evidence are in
+[the test suite](docs/testing/backlog-test-suite.md).
 
 ## Development
 
