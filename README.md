@@ -18,14 +18,19 @@ lib/
 │   └── activities/         # Activity data and repository
 ├── screens/
 │   ├── create_activity/    # First activity form
-│   ├── home/               # Home screen and its widgets
+│   ├── home/               # Home screen layout and behavior
 │   ├── practice/           # Practice and timer display
 │   └── welcome/            # First-launch welcome
+├── ui/                     # Reusable app-wide widgets
 └── main.dart               # App entry point
 ```
 
-Each screen and shared feature has a short README in its directory. Keep
-screen-only widgets beside that screen.
+Each screen and shared feature has a short README in its directory. Keep screen
+composition and behavior with its screen; place visual widgets in `lib/ui/`.
+
+Welcome uses a full-screen local island illustration, English overlay copy, and
+the shared Liquid Glass action button. The illustration stays separate from
+the accessible text and interactive controls.
 
 Home gives the first created activity a clear next step: a brief tutorial can
 be dismissed, then `Начать занятие` opens Practice. The current timer only
