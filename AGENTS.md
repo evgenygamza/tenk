@@ -1,5 +1,13 @@
 # TenK
 
+## App language
+
+- Write all user-facing app UI text in English. This includes labels, buttons,
+  hints, validation messages, accessibility labels, and placeholder copy.
+- Preserve user-provided content as entered, including activity names. Do not
+  translate or rewrite user data to enforce the UI language.
+- Keep agent-maintained documentation in English.
+
 ## Backlog and project tracking
 
 - GitHub Issues and the TenK GitHub Project are the source of truth for the project backlog, priorities, and task status.

@@ -59,7 +59,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/welcome_background.png
+    - assets/images/island_background.png
+    - assets/images/landmark_100_hours_angled.png
+    - assets/images/landmark_10000_hours_angled.png
+    - assets/images/activity_question_mark_angled.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

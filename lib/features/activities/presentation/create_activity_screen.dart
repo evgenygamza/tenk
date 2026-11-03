@@ -40,7 +40,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       setState(() {
-        _fieldError = 'Введи название занятия';
+        _fieldError = 'Enter an activity name';
         _saveError = null;
       });
       return;
@@ -62,7 +62,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _saveError = 'Не удалось сохранить. Попробуй ещё раз.';
+        _saveError = 'Could not save. Please try again.';
       });
     }
   }
@@ -95,11 +95,10 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Первое занятие', style: textTheme.headlineLarge),
+                      Text('First activity', style: textTheme.headlineLarge),
                       const SizedBox(height: 12),
                       Text(
-                        'Что ты хочешь развивать? Для начала достаточно '
-                        'одного названия.',
+                        'What would you like to develop? Start with a name.',
                         style: textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 32),
@@ -120,8 +119,8 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                         },
                         onSubmitted: (_) => _save(),
                         decoration: InputDecoration(
-                          labelText: 'Название',
-                          hintText: 'Например, гитара',
+                          labelText: 'Name',
+                          hintText: 'For example, guitar',
                           errorText: _fieldError,
                           filled: true,
                           fillColor: Theme.of(context).colorScheme.surface,
@@ -153,7 +152,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : const Text('Сохранить'),
+                            : const Text('Save'),
                       ),
                     ],
                   ),

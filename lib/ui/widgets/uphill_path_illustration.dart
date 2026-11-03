@@ -8,7 +8,7 @@ class UphillPathIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Тропинка поднимается к вершине зелёного холма',
+      label: 'A path climbs to the top of a green hill',
       image: true,
       child: SizedBox(
         height: compact ? 190 : 250,
