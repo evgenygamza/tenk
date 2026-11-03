@@ -1,0 +1,11 @@
+# Shared UI
+
+Place visual widgets in `lib/ui/widgets/`. Keep screen composition and
+behavior with the screen that owns it.
+
+`LiquidGlassButton` is a tappable, labeled action control used where the
+translucent glass treatment is part of the design. It accepts a label and
+nullable callback so it can also represent a disabled action.
+
+`UphillPathIllustration` is the low-poly Home illustration, kept separate from
+the Home screen layout.

@@ -77,3 +77,18 @@ final complete test run passed. Automated restart coverage recreates App with
 an injected repository; repository tests use an in-memory preferences platform.
 A native process restart with real iOS preferences and visual review remain
 manual verification gaps. No timer, graphs, history, or settings were added.
+
+## Welcome screen visual refresh
+
+Task: `#54` — Match the approved 10K Hours Welcome design.
+
+Tested branch: `task/welcome-screen-54`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| English Welcome copy, background, and balanced spacing | Fresh app state; Welcome is the initial route | `flutter test test/welcome_screen_test.dart` | The full-screen local island image is shown with `TENK`, “Time Becomes Mastery”, the English description, and “Get Started” as real Flutter text and control; both vertical gaps match and the copy sits lower above the anchored button | NOT RUN |
+| Start continues onboarding | First-activity repository is empty | Run the Start navigation test in `test/welcome_screen_test.dart` | “Get Started” opens the existing first-activity screen | NOT RUN |
+| Compact viewport remains usable | 320×568 logical-pixel test viewport | Run the compact Welcome test in `test/welcome_screen_test.dart` | No layout exception; the primary action remains available | NOT RUN |
+| Regression coverage | Current task branch | `flutter test --reporter expanded` | All onboarding, persistence, Home, and Practice tests pass | NOT RUN |
+| Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+| iOS visual review | Available iPhone simulator | `bash scripts/run-ios-simulator.sh` | Full-bleed background, readable English copy, and glass button match the approved portrait composition | NOT RUN |
