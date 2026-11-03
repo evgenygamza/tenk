@@ -87,10 +87,10 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                       if (canNavigateBack)
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.58),
+                            color: Colors.white.withValues(alpha: 0.58),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                           child: IconButton(
@@ -213,10 +213,10 @@ class _AddActivityVisual extends StatelessWidget {
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.24),
+                  color: Colors.white.withValues(alpha: 0.24),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.88),
+                    color: Colors.white.withValues(alpha: 0.88),
                     width: 1.5,
                   ),
                   boxShadow: const [

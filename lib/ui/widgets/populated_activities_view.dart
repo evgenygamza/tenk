@@ -204,7 +204,7 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
           decoration: BoxDecoration(
             color: const Color(0xDDF4EFE3),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withOpacity(0.75)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.75)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,10 +254,10 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               disabledForegroundColor: Colors.white,
-              backgroundColor: Colors.white.withOpacity(0.18),
-              disabledBackgroundColor: Colors.white.withOpacity(0.18),
+              backgroundColor: Colors.white.withValues(alpha: 0.18),
+              disabledBackgroundColor: Colors.white.withValues(alpha: 0.18),
               side: BorderSide(
-                color: Colors.white.withOpacity(0.82),
+                color: Colors.white.withValues(alpha: 0.82),
                 width: 1.5,
               ),
               shape: const StadiumBorder(),
@@ -287,10 +287,10 @@ class _ActivitySelector extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.22),
+            color: Colors.white.withValues(alpha: 0.22),
             borderRadius: BorderRadius.circular(40),
             border: Border.all(
-              color: Colors.white.withOpacity(0.82),
+              color: Colors.white.withValues(alpha: 0.82),
               width: 1.4,
             ),
             boxShadow: const [
@@ -333,7 +333,7 @@ class _ActivityEmoji extends StatelessWidget {
           padding: const EdgeInsets.all(5),
           decoration: selected
               ? BoxDecoration(
-                  color: Colors.white.withOpacity(0.28),
+                  color: Colors.white.withValues(alpha: 0.28),
                   shape: BoxShape.circle,
                 )
               : null,
@@ -352,7 +352,7 @@ class _SelectorDivider extends StatelessWidget {
     return Container(
       width: 1,
       height: 34,
-      color: Colors.white.withOpacity(0.55),
+      color: Colors.white.withValues(alpha: 0.55),
     );
   }
 }
@@ -377,10 +377,10 @@ class _AddActivityVisual extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.22),
+              color: Colors.white.withValues(alpha: 0.22),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.88),
+                color: Colors.white.withValues(alpha: 0.88),
                 width: 1.5,
               ),
               boxShadow: const [
