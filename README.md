@@ -7,10 +7,13 @@ The current MVP is being rebuilt around one focused path:
 
 1. Welcome.
 2. Create the first activity.
-3. Open a simple home screen on subsequent launches.
+3. Open Home and begin a practice timer.
 
-Timer sessions, history, settings, statistics, and workshop evolution are
-deferred to later stages.
+Home gives the first created activity a clear next step: a brief tutorial can
+be dismissed, then `Начать занятие` opens a local timer. The timer can start
+and pause while its screen is open. Saving a session, history, settings,
+statistics, workshop evolution, and timer persistence are deferred to later
+stages.
 
 On startup, TenK loads the first activity from local storage before choosing a
 screen. Without an activity (including a blank stored name), it opens Welcome
@@ -29,17 +32,47 @@ scenarios and execution evidence are in [the test suite](docs/testing/backlog-te
 
 ## Development
 
-Install Flutter 3.41.0, then run:
+Install Flutter 3.41.0. From the repository root, use these commands to prepare
+the project and inspect the local Flutter setup:
 
 ```bash
 flutter pub get
-flutter test
+flutter doctor -v
+flutter devices
+```
+
+Run the automated checks with:
+
+```bash
+# Run all widget and repository tests with readable output
+flutter test --reporter expanded
+
+# Run one test file
+flutter test test/app_test.dart
+
+# Check Dart and Flutter lints
+flutter analyze
+
+# Format Dart sources
+dart format lib test
+```
+
+Run on the default connected device with:
+
+```bash
 flutter run
 ```
 
-On macOS, the existing helper starts an available iPhone simulator and runs
-the current working tree:
+On macOS, the iOS helper boots an available iPhone simulator, opens Simulator,
+and runs the current working tree. Pass a simulator UDID to select a device:
 
 ```bash
 bash scripts/run-ios-simulator.sh
+bash scripts/run-ios-simulator.sh <simulator-UDID>
+```
+
+List available iOS simulators and their UDIDs with:
+
+```bash
+xcrun simctl list devices available
 ```

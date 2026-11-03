@@ -1,5 +1,37 @@
 # Backlog verification
 
+## Home tutorial and minimal timer
+
+Task: `6hvg5P2gJ99g4q82` — Сделать главный экран с туториалом и минимальным таймером.
+
+Tested branch: `task/home-tutorial-timer`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| First Home tutorial | Create `Гитара` on a fresh app install | Save the activity, read the Home tutorial, then select `Понятно` | Tutorial explains the next step and can be dismissed | Fresh-install walkthrough NOT RUN; widget test passes |
+| Home opens practice | Home for `Гитара` | Select `Начать занятие` | Practice screen opens for `Гитара` | PASS — verified in iOS Simulator |
+| Minimal timer | Practice screen is open | Select `Начать`, wait, then select `Поставить на паузу` | Elapsed time increases while running and stops while paused | PASS — verified start, elapsed time, and pause in iOS Simulator |
+| Automated regressions | Current task branch | `flutter test --reporter expanded` | All automated tests pass | PASS — 19 tests |
+| Static analysis | Current task branch | `flutter analyze` | No issues | PASS — no issues found |
+
+The timer is deliberately local to the practice screen. Leaving the screen, persistence, session saving, and history are outside this task.
+
+## First user path in the iOS simulator
+
+Task: `6hvfVgjrG3C6vg22` — Проверить первый пользовательский путь в симуляторе и передать на приёмку.
+
+Tested branch: `task/home-tutorial-timer` while the follow-on Home work is in progress.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| First user path | Fresh simulator app data; activity name `Гитара` | Launch the app, select Start, enter `Гитара`, save | Home opens and displays `Гитара` | NOT RUN |
+| Native restart keeps the activity | Complete the first-user path | Fully terminate the app in the simulator, then relaunch it | Home opens directly with `Гитара`; Welcome does not appear | NOT RUN |
+| Automated regressions | Current task branch | `flutter test --reporter expanded` | All automated tests pass | NOT RUN |
+| Static analysis | Current task branch | `flutter analyze` | No issues | NOT RUN |
+| iOS build and launch | Available iPhone simulator | `bash scripts/run-ios-simulator.sh` | Build succeeds and the app launches | NOT RUN |
+
+The user runs these commands and reports only `OK` or `NOT OK`. Record further evidence only if the user asks.
+
 ## Simple Home and repeat launch
 
 Task: `6hvfVgg8jgFH7VHR` — Сделать простой главный экран и повторный вход.

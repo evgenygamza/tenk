@@ -90,7 +90,10 @@ class _AppState extends State<App> {
           onSaved: (activityName) {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute<void>(
-                builder: (_) => HomeScreen(activityName: activityName),
+                builder: (_) => HomeScreen(
+                  activityName: activityName,
+                  showTutorial: true,
+                ),
               ),
               (_) => false,
             );

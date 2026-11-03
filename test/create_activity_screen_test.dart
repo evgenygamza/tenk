@@ -68,6 +68,7 @@ void main() {
     expect(repository.saveCalls, ['Гитара']);
     expect(repository.storedName, 'Гитара');
     expect(find.byKey(HomeScreen.screenKey), findsOneWidget);
+    expect(find.byKey(HomeScreen.tutorialKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     expect(
       tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
