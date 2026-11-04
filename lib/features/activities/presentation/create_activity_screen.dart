@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
-import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
 import 'package:tenk/ui/widgets/translucent_panel.dart';
 
 class CreateActivityScreen extends StatefulWidget {
   const CreateActivityScreen({
     super.key,
-    required this.repository,
     required this.onSaved,
     required this.onCancel,
+    this.initialActivity,
   });
 
   static const screenKey = Key('create_activity_screen');
@@ -22,9 +21,9 @@ class CreateActivityScreen extends StatefulWidget {
   static const selectedIconKey = Key('create_activity_selected_icon');
   static const maxNameLength = 40;
 
-  final FirstActivityRepository repository;
-  final ValueChanged<FirstActivity> onSaved;
+  final Future<void> Function(FirstActivity) onSaved;
   final VoidCallback onCancel;
+  final FirstActivity? initialActivity;
 
   @override
   State<CreateActivityScreen> createState() => _CreateActivityScreenState();
@@ -35,12 +34,20 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
   final _searchController = TextEditingController();
   final _iconScrollController = ScrollController();
 
-  String _iconId = activityIconCatalog.first.id;
+  late String _iconId;
   String _searchTerm = '';
   String _category = 'All';
   String? _fieldError;
   String? _saveError;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final activity = widget.initialActivity;
+    _iconId = activity?.iconId ?? activityIconCatalog.first.id;
+    if (activity != null) _nameController.text = activity.name;
+  }
 
   @override
   void dispose() {
@@ -71,10 +78,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
 
     final activity = FirstActivity(name: name, iconId: _iconId);
     try {
-      await widget.repository.saveActivity(activity);
+      await widget.onSaved(activity);
       if (!mounted) return;
       setState(() => _isSaving = false);
-      widget.onSaved(activity);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -120,7 +126,9 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
                     ),
                   ),
                   Text(
-                    'First activity',
+                    widget.initialActivity == null
+                        ? 'Add activity'
+                        : 'Edit activity',
                     style: textTheme.headlineLarge?.copyWith(
                       fontSize: 28,
                       color: colors.onSurface,

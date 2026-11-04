@@ -60,7 +60,33 @@ class _LandmarkImage extends StatelessWidget {
       key: ActivityLandmark.landmarkKey,
       label: '$hours hours',
       image: true,
-      child: ExcludeSemantics(child: Image.asset(asset, fit: BoxFit.contain)),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: FractionallySizedBox(
+              widthFactor: 0.72,
+              heightFactor: 0.035,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0x1F0B271B),
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x3D0B271B),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          ExcludeSemantics(child: Image.asset(asset, fit: BoxFit.contain)),
+        ],
+      ),
     );
   }
 }

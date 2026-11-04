@@ -1,8 +1,11 @@
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
+import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/ui/widgets/translucent_panel.dart';
@@ -10,10 +13,14 @@ import 'package:tenk/ui/widgets/translucent_panel.dart';
 class PopulatedActivitiesView extends StatefulWidget {
   const PopulatedActivitiesView({
     super.key,
-    required this.activityName,
-    this.activityIconId = 'instrument',
+    required this.activities,
+    this.selectedIndex = 0,
     this.showTutorial = false,
     this.onPreviewBack,
+    this.onSelectActivity,
+    this.onLongPressActivity,
+    this.onAddActivity,
+    this.showAddActivity = true,
   });
 
   static const viewKey = Key('populated_activities_view');
@@ -28,10 +35,14 @@ class PopulatedActivitiesView extends StatefulWidget {
 
   static const backgroundAsset = ActivityIsland.backgroundAsset;
 
-  final String activityName;
-  final String activityIconId;
+  final List<FirstActivity> activities;
+  final int selectedIndex;
   final bool showTutorial;
   final VoidCallback? onPreviewBack;
+  final ValueChanged<int>? onSelectActivity;
+  final void Function(BuildContext context, int index)? onLongPressActivity;
+  final VoidCallback? onAddActivity;
+  final bool showAddActivity;
 
   @override
   State<PopulatedActivitiesView> createState() =>
@@ -48,7 +59,16 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   }
 
   @override
+  void didUpdateWidget(covariant PopulatedActivitiesView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showTutorial != widget.showTutorial) {
+      _showTutorial = widget.showTutorial;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final selectedActivity = widget.activities[widget.selectedIndex];
     return Stack(
       key: PopulatedActivitiesView.viewKey,
       fit: StackFit.expand,
@@ -115,23 +135,48 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    activityIconFor(widget.activityIconId).icon,
-                                    color: appInkColor,
-                                    size: 24,
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 260),
+                                    transitionBuilder: (child, animation) =>
+                                        ScaleTransition(
+                                          scale: animation,
+                                          child: FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          ),
+                                        ),
+                                    child: Icon(
+                                      activityIconFor(
+                                        selectedActivity.iconId,
+                                      ).icon,
+                                      key: ValueKey(selectedActivity.iconId),
+                                      color: appInkColor,
+                                      size: 24,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Flexible(
-                                    child: Text(
-                                      widget.activityName,
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: appInkColor,
-                                        fontSize: compact ? 23 : 27,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.4,
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 260,
+                                      ),
+                                      transitionBuilder: (child, animation) =>
+                                          FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          ),
+                                      child: Text(
+                                        selectedActivity.name,
+                                        key: ValueKey(selectedActivity.name),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: appInkColor,
+                                          fontSize: compact ? 23 : 27,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.4,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -194,10 +239,19 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               _ActivitySelector(
-                                selectedIconId: widget.activityIconId,
+                                activities: widget.activities,
+                                selectedIndex: widget.selectedIndex,
+                                onSelected: widget.onSelectActivity,
+                                onLongPressActivity: widget.onLongPressActivity,
                               ),
                               SizedBox(width: compact ? 10 : 14),
-                              _AddActivityVisual(compact: compact),
+                              if (widget.showAddActivity)
+                                ActivityAddButton(
+                                  key: PopulatedActivitiesView
+                                      .addActivityVisualKey,
+                                  compact: compact,
+                                  onPressed: widget.onAddActivity,
+                                ),
                             ],
                           ),
                         ),
@@ -285,118 +339,39 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
 }
 
 class _ActivitySelector extends StatelessWidget {
-  const _ActivitySelector({required this.selectedIconId});
+  const _ActivitySelector({
+    required this.activities,
+    required this.selectedIndex,
+    required this.onSelected,
+    required this.onLongPressActivity,
+  });
 
-  final String selectedIconId;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      key: PopulatedActivitiesView.activitySelectorKey,
-      borderRadius: BorderRadius.circular(40),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(40),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.82),
-              width: 1.4,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x44202A22),
-                blurRadius: 14,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ActivityIcon(
-                icon: activityIconFor(selectedIconId).icon,
-                selected: true,
-              ),
-              _SelectorDivider(),
-              const _ActivityIcon(icon: Icons.music_note),
-              _SelectorDivider(),
-              const _ActivityIcon(icon: Icons.directions_run),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityIcon extends StatelessWidget {
-  const _ActivityIcon({required this.icon, this.selected = false});
-
-  final IconData icon;
-  final bool selected;
+  final List<FirstActivity> activities;
+  final int selectedIndex;
+  final ValueChanged<int>? onSelected;
+  final void Function(BuildContext context, int index)? onLongPressActivity;
 
   @override
   Widget build(BuildContext context) {
+    final available = (MediaQuery.sizeOf(context).width - 152)
+        .clamp(0, 280)
+        .toDouble();
+    final contentWidth = activities.length * 48.0 + 19;
     return SizedBox(
-      width: 52,
-      height: 48,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(5),
-          decoration: selected
-              ? BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.28),
-                  shape: BoxShape.circle,
-                )
-              : null,
-          child: Icon(icon, color: Colors.white, size: 25),
-        ),
-      ),
-    );
-  }
-}
-
-class _SelectorDivider extends StatelessWidget {
-  const _SelectorDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 34,
-      color: Colors.white.withValues(alpha: 0.55),
-    );
-  }
-}
-
-class _AddActivityVisual extends StatelessWidget {
-  const _AddActivityVisual({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final size = compact ? 62.0 : 72.0;
-    return Semantics(
-      key: PopulatedActivitiesView.addActivityVisualKey,
-      label: 'Add activity',
-      button: true,
-      enabled: false,
-      child: ClipOval(
+      width: math.min(available, contentWidth).toDouble(),
+      child: ClipRRect(
+        key: PopulatedActivitiesView.activitySelectorKey,
+        borderRadius: BorderRadius.circular(40),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            width: size,
-            height: size,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.22),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(40),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.88),
-                width: 1.5,
+                color: Colors.white.withValues(alpha: 0.82),
+                width: 1.4,
               ),
               boxShadow: const [
                 BoxShadow(
@@ -406,7 +381,76 @@ class _AddActivityVisual extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(Icons.add, color: Colors.white, size: 42),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var index = 0; index < activities.length; index++)
+                    _ActivityIcon(
+                      key: ValueKey('activities_selector_item_$index'),
+                      icon: activityIconFor(activities[index].iconId).icon,
+                      selected: index == selectedIndex,
+                      onTap: onSelected == null
+                          ? null
+                          : () => onSelected!(index),
+                      onLongPress: onLongPressActivity == null
+                          ? null
+                          : (iconContext) =>
+                                onLongPressActivity!(iconContext, index),
+                      label: activities[index].name,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityIcon extends StatelessWidget {
+  const _ActivityIcon({
+    super.key,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    required this.onLongPress,
+    required this.label,
+  });
+
+  final IconData icon;
+  final bool selected;
+  final VoidCallback? onTap;
+  final ValueChanged<BuildContext>? onLongPress;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress == null ? null : () => onLongPress!(context),
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 48,
+          height: 46,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              padding: const EdgeInsets.all(5),
+              decoration: selected
+                  ? BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.32),
+                      shape: BoxShape.circle,
+                    )
+                  : null,
+              child: Icon(icon, color: Colors.white, size: 25),
+            ),
           ),
         ),
       ),

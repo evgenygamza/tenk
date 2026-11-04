@@ -11,10 +11,19 @@ import 'package:tenk/ui/widgets/liquid_glass_button.dart';
 
 class _NoopRepository implements FirstActivityRepository {
   @override
-  Future<FirstActivity?> loadActivity() async => null;
+  Future<List<FirstActivity>> loadActivities() async => [];
 
   @override
-  Future<void> saveActivity(FirstActivity activity) async {}
+  Future<void> saveActivities(
+    List<FirstActivity> activities, {
+    int? selectedIndex,
+  }) async {}
+
+  @override
+  Future<int> loadSelectedActivityIndex() async => 0;
+
+  @override
+  Future<void> saveSelectedActivityIndex(int index) async {}
 }
 
 void main() {

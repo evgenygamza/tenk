@@ -24,6 +24,10 @@ gold of the path.
 - Use one-color vector icons for activity identity. Keep catalog identifiers
   stable in saved data; do not persist platform-rendered emoji glyphs. Make a
   broad icon catalog searchable and filterable by category.
+- Give milestone artwork a soft, centered ground shadow at its base when it is
+  layered over the island landscape.
+- Style contextual popup menus with the shared translucent surface, rounded
+  border, subtle shadow, and theme foreground colors.
 
 ## Apple materials guidance
 
