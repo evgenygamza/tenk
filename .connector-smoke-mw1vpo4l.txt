@@ -1,0 +1,1 @@
+Temporary GitHub connector smoke test. No product code.
