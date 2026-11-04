@@ -8,7 +8,8 @@ The current first-use path is being delivered in steps:
 1. Welcome.
 2. Open the empty Activities screen.
 3. Create the first activity from its add button (issue #59).
-4. Show the populated Activities state; add the timer widget in a later task.
+4. Show the populated Activities state with an MVP start/stop button connected
+   to a mock timer (issue #69); full session management remains in issue #40.
 
 ## Code layout
 
@@ -35,9 +36,10 @@ the shared Liquid Glass action button. The illustration stays separate from
 the accessible text and interactive controls.
 
 Activities is the main activity page, with empty and populated states. The
-populated state keeps the Start Session control as a visual placeholder. The
-deprecated Practice timer prototype is retained only as a reference until #40
-adds timer controls to Activities. Saving a
+populated state includes a large round control that sends Start and Stop signals
+to an in-memory mock timer. It reflects whether the mock is running but does not
+count or save elapsed time. The deprecated Practice timer prototype is retained
+as a reference for the full shared timer in #40. Saving a
 session, history, settings, statistics, and workshop evolution are deferred.
 
 On startup, TenK loads the first activity from local storage before choosing a

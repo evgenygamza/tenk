@@ -8,6 +8,7 @@ import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
+import 'package:tenk/screens/activities/widgets/activities_timer_button.dart';
 import 'package:tenk/ui/widgets/translucent_panel.dart';
 
 class PopulatedActivitiesView extends StatefulWidget {
@@ -26,7 +27,7 @@ class PopulatedActivitiesView extends StatefulWidget {
   static const viewKey = Key('populated_activities_view');
   static const tutorialKey = Key('activities_tutorial');
   static const dismissTutorialKey = Key('activities_dismiss_tutorial');
-  static const startSessionKey = Key('activities_start_session');
+  static const startSessionKey = ActivitiesTimerButton.toggleButtonKey;
   static const goalKey = Key('activities_goal');
   static const etaKey = Key('activities_goal_eta');
   static const activitySelectorKey = Key('activities_selector');
@@ -51,11 +52,13 @@ class PopulatedActivitiesView extends StatefulWidget {
 
 class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   late bool _showTutorial;
+  late final MockActivitiesTimer _timer;
 
   @override
   void initState() {
     super.initState();
     _showTutorial = widget.showTutorial;
+    _timer = MockActivitiesTimer();
   }
 
   @override
@@ -205,7 +208,9 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                           ),
                         ),
                         SizedBox(height: compact ? 2 : 4),
-                        const Spacer(flex: 3),
+                        const Spacer(flex: 2),
+                        ActivitiesTimerButton(timer: _timer),
+                        SizedBox(height: compact ? 14 : 20),
                         Text(
                           'Every hour brings you closer\nto mastery.',
                           textAlign: TextAlign.center,
@@ -228,11 +233,6 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                           SizedBox(height: compact ? 12 : 18),
                           _tutorialCard(context),
                         ],
-                        SizedBox(height: compact ? 14 : 20),
-                        _glassButton(
-                          child: const Text('Start Session'),
-                          onPressed: null,
-                        ),
                         SizedBox(height: compact ? 14 : 22),
                         Center(
                           child: Row(
@@ -298,41 +298,6 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _glassButton({
-    required Widget child,
-    required VoidCallback? onPressed,
-  }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(36),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: SizedBox(
-          height: 68,
-          child: OutlinedButton(
-            key: PopulatedActivitiesView.startSessionKey,
-            onPressed: onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              disabledForegroundColor: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: 0.18),
-              disabledBackgroundColor: Colors.white.withValues(alpha: 0.18),
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.82),
-                width: 1.5,
-              ),
-              shape: const StadiumBorder(),
-              textStyle: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            child: child,
-          ),
-        ),
       ),
     );
   }

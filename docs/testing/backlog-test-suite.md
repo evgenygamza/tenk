@@ -1,5 +1,23 @@
 # Backlog verification
 
+## MVP Activities timer button
+
+Task: `#69` — Добавить MVP-кнопку запуска и остановки таймера в Activities.
+
+Branch: `task/69-activities-mvp-timer-button`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #69 — Button sends Start and Stop to the mock | Populated Activities; mock timer starts idle | Run `flutter test test/home_practice_flow_test.dart`; tap the timer control twice | The mock receives Start then Stop, and the button changes Play → Stop → Play | NOT RUN |
+| #69 — Timer control stays inside Activities | Populated Activities for `Гитара` | Run `flutter test test/home_practice_flow_test.dart` and activate the timer | Activities remains the active page; deprecated Practice is not opened | NOT RUN |
+| #69 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All automated tests pass | NOT RUN |
+| #69 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+
+The mock receiver stores only its running state and most recent signal. It does
+not count elapsed time, associate a session with an activity, or persist data;
+those behaviors remain in issue #40. The user runs checks and reports `OK` or
+`NOT OK`.
+
 ## First activity creation from Activities
 
 Task: `#59` — Подключить создание первого занятия из экрана активностей.
