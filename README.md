@@ -36,11 +36,11 @@ the shared Liquid Glass action button. The illustration stays separate from
 the accessible text and interactive controls.
 
 Activities is the main activity page, with empty and populated states. The
-populated state uses one shared timer. Start, Pause, and Resume control the same
-activity timer; elapsed time is calculated from stored timestamps and added to
-daily totals, including when it crosses local midnight. Timer state and totals
-restore after an app restart. The app does not create session records or show a
-running digital counter.
+populated state uses one shared timer with two states: `running` and `stopped`.
+Start begins tracking the selected activity; Stop ends tracking and adds elapsed
+time to daily totals, including when it crosses local midnight. Timer state and
+totals restore after an app restart. The app does not create session
+records or show a running digital counter.
 
 On startup, TenK loads the first activity from local storage before choosing a
 screen. Without an activity (including a blank stored name), it opens Welcome.

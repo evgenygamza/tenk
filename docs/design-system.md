@@ -22,8 +22,11 @@ gold of the path.
   navigation elements. Do not apply it as a decorative effect to every content
   surface; keep enough of the island artwork visible to preserve context.
 - Use the moss primary color and a circular shape for the prominent Activities
-  timer control. Keep its start/stop state clear through both its icon and
-  accessible label.
+  timer control. The timer has only two states, `running` and `stopped`; keep
+  the state and its Start or Stop action clear through its icon and accessible
+  label. Show Play when stopped or disabled for another activity, and Pause
+  while controlling a running timer; its action and accessible label remain
+  Start or Stop.
 - Use one-color vector icons for activity identity. Keep catalog identifiers
   stable in saved data; do not persist platform-rendered emoji glyphs. Make a
   broad icon catalog searchable and filterable by category.

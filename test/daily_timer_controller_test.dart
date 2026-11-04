@@ -17,7 +17,7 @@ class _MemoryDailyTimerRepository implements DailyTimerRepository {
 
 void main() {
   test(
-    'pause stores elapsed time by local day and resume keeps the total',
+    'stop stores elapsed time by local day and clears active timer',
     () async {
       final repository = _MemoryDailyTimerRepository();
       var now = DateTime(2026, 11, 4, 23, 55);
@@ -32,8 +32,9 @@ void main() {
       expect(timer.status, DailyTimerStatus.running);
 
       now = DateTime(2026, 11, 5, 0, 5);
-      await timer.pause();
-      expect(timer.status, DailyTimerStatus.paused);
+      await timer.stop();
+      expect(timer.status, DailyTimerStatus.stopped);
+      expect(timer.activeActivityId, isNull);
       expect(
         timer.totalForDay('activity-1', DateTime(2026, 11, 4)),
         const Duration(minutes: 5),
@@ -42,12 +43,9 @@ void main() {
         timer.totalForDay('activity-1', DateTime(2026, 11, 5)),
         const Duration(minutes: 5),
       );
-
-      now = DateTime(2026, 11, 5, 0, 6);
-      await timer.resume();
-      now = DateTime(2026, 11, 5, 0, 9);
-      await timer.pause();
-      expect(timer.totalFor('activity-1'), const Duration(minutes: 13));
+      expect(timer.totalFor('activity-1'), const Duration(minutes: 10));
+      expect(repository.data.activeActivityId, isNull);
+      expect(repository.data.runningSinceMilliseconds, isNull);
     },
   );
 
@@ -71,8 +69,57 @@ void main() {
       expect(restoredTimer.status, DailyTimerStatus.running);
       expect(restoredTimer.totalFor('activity-1'), const Duration(minutes: 7));
 
-      await restoredTimer.pause();
+      await restoredTimer.stop();
       expect(restoredTimer.totalFor('activity-1'), const Duration(minutes: 7));
+      expect(restoredTimer.status, DailyTimerStatus.stopped);
+    },
+  );
+
+  test('stopped state restores after reload', () async {
+    final repository = _MemoryDailyTimerRepository();
+    var now = DateTime(2026, 11, 4, 10);
+    final timer = DailyTimerController(
+      repository: repository,
+      clock: () => now,
+    );
+    await timer.start('activity-1');
+    now = DateTime(2026, 11, 4, 10, 5);
+    await timer.stop();
+
+    final restoredTimer = DailyTimerController(
+      repository: repository,
+      clock: () => now,
+    );
+    await restoredTimer.load();
+
+    expect(restoredTimer.status, DailyTimerStatus.stopped);
+    expect(restoredTimer.activeActivityId, isNull);
+    expect(restoredTimer.totalFor('activity-1'), const Duration(minutes: 5));
+  });
+
+  test(
+    'legacy paused state restores as stopped without losing totals',
+    () async {
+      final repository = _MemoryDailyTimerRepository()
+        ..data = DailyTimerData(
+          activeActivityId: 'activity-1',
+          totals: {
+            '2026-11-04': {
+              'activity-1': const Duration(minutes: 4).inMilliseconds,
+            },
+          },
+        );
+      final timer = DailyTimerController(repository: repository);
+
+      await timer.load();
+
+      expect(timer.status, DailyTimerStatus.stopped);
+      expect(timer.activeActivityId, isNull);
+      expect(timer.totalFor('activity-1'), const Duration(minutes: 4));
+      expect(repository.data.activeActivityId, isNull);
+      expect(repository.data.totals, {
+        '2026-11-04': {'activity-1': const Duration(minutes: 4).inMilliseconds},
+      });
     },
   );
 }

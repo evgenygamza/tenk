@@ -11,14 +11,14 @@ opens the form prefilled with its current name and icon. Deletion requires
 confirmation; removing the last activity returns to the empty Activities state.
 
 The populated state shows the current activity name and monochrome icon with
-its visual goal summary. The large round control manages the app-wide timer:
-Start begins tracking the selected activity, Pause adds elapsed time to daily
-totals, and Resume continues the same timer. The timer uses stored timestamps,
-restores after restart, and splits elapsed time at local midnight. Activity
-activity selection remains available while the timer runs or is paused. The
-timer stays bound to its original activity; its button is disabled on other
-activities and shows Pause or Resume again when that activity is selected. No
-session records or digital running counter are shown.
+its visual goal summary. The large round control manages the app-wide timer,
+which has only two states: `running` and `stopped`. Start begins tracking the
+selected activity; Stop ends tracking and adds elapsed time to daily totals.
+The timer uses stored timestamps, restores after restart, and splits elapsed
+time at local midnight. While it is running, the timer stays bound to its
+original activity and its button is disabled on other activities. Once stopped,
+the selected activity can be changed and tracking can start again. No session
+records or digital running counter are shown.
 `ActivityIsland` uses the same clean island background as Welcome and anchors a
 separate `ActivityLandmark` at the summit using artwork coordinates. The 100-
 hour marker and 10,000-hour Greek temple are distinct illustrated assets with
