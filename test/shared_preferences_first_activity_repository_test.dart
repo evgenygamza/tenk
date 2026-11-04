@@ -38,7 +38,7 @@ void main() {
       );
 
       expect(await repository.loadActivities(), [
-        const FirstActivity(name: 'Гитара', iconId: 'sparkles'),
+        const FirstActivity(name: 'Гитара', iconId: 'sparkles', id: 'legacy-0'),
       ]);
       expect(await repository.loadSelectedActivityIndex(), 0);
     },

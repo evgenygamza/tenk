@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
@@ -67,6 +69,15 @@ Future<void> _tapSave(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+  });
+
+  tearDown(() {
+    SharedPreferencesAsyncPlatform.instance = null;
+  });
+
   testWidgets('rejects an empty activity name', (tester) async {
     final repository = _FakeRepository();
     await _openCreateActivity(tester, repository);
@@ -94,9 +105,10 @@ void main() {
     await _tapSave(tester);
     await tester.pumpAndSettle();
 
-    const activity = FirstActivity(name: 'Гитара', iconId: 'instrument');
-    expect(repository.saveCalls, [activity]);
-    expect(repository.storedActivity, activity);
+    expect(repository.saveCalls, hasLength(1));
+    expect(repository.storedActivity?.name, 'Гитара');
+    expect(repository.storedActivity?.iconId, 'instrument');
+    expect(repository.storedActivity?.id, isNotEmpty);
     expect(find.byKey(PopulatedActivitiesView.viewKey), findsOneWidget);
     expect(find.byKey(PopulatedActivitiesView.tutorialKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);

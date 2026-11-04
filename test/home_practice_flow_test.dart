@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tenk/features/activities/domain/models/first_activity.dart';
+import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
+import 'package:tenk/features/timer/domain/models/daily_timer_data.dart';
+import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
-import 'package:tenk/screens/activities/widgets/activities_timer_button.dart';
 import 'package:tenk/ui/widgets/populated_activities_view.dart';
-import 'package:tenk/ui/deprecated/practice_screen_prototype.dart';
+
+class _MemoryTimerRepository implements DailyTimerRepository {
+  DailyTimerData data = const DailyTimerData();
+
+  @override
+  Future<DailyTimerData> load() async => data;
+
+  @override
+  Future<void> save(DailyTimerData data) async {
+    this.data = data;
+  }
+}
 
 void main() {
   Future<void> pumpActivities(
@@ -29,7 +43,7 @@ void main() {
 
     expect(find.byKey(PopulatedActivitiesView.tutorialKey), findsOneWidget);
     expect(
-      find.text('Start your first session to begin your journey.'),
+      find.text('Start tracking your first activity to begin your journey.'),
       findsOneWidget,
     );
 
@@ -44,7 +58,7 @@ void main() {
     expect(find.byKey(PopulatedActivitiesView.startSessionKey), findsOneWidget);
   });
 
-  testWidgets('Activities toggles its MVP timer without opening Practice', (
+  testWidgets('Activities timer starts, pauses, and resumes in place', (
     tester,
   ) async {
     await pumpActivities(tester, showTutorial: false);
@@ -54,42 +68,121 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ActivitiesScreen), findsOneWidget);
-    expect(find.byKey(PracticeScreen.screenKey), findsNothing);
+    expect(find.byKey(ActivitiesScreen.screenKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
-    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+    expect(find.text('00:00:00'), findsNothing);
 
     await tester.tap(timerButton);
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.byTooltip('Resume timer'), findsOneWidget);
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
   });
 
-  testWidgets('Timer button sends Start and Stop to the mock timer', (
+  testWidgets(
+    'switching activities while running disables the other timer button',
+    (tester) async {
+      final timer = DailyTimerController(
+        repository: _MemoryTimerRepository(),
+        clock: () => DateTime(2026, 11, 4, 10),
+      );
+      addTearDown(timer.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ActivitiesScreen(
+            activities: const [
+              FirstActivity(name: 'Гитара', iconId: 'instrument', id: 'guitar'),
+              FirstActivity(name: 'Пианино', iconId: 'music', id: 'piano'),
+            ],
+            timerController: timer,
+            showTutorial: false,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(PopulatedActivitiesView.startSessionKey));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('activities_selector_item_1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Пианино'), findsOneWidget);
+      expect(timer.status, DailyTimerStatus.running);
+      expect(timer.activeActivityId, 'guitar');
+      expect(
+        find.byTooltip('Timer is active for another activity'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(PopulatedActivitiesView.startSessionKey),
+            )
+            .onPressed,
+        isNull,
+      );
+    },
+  );
+
+  testWidgets('switching activities after pause preserves the paused timer', (
     tester,
   ) async {
-    final timer = MockActivitiesTimer();
+    final repository = _MemoryTimerRepository();
+    var now = DateTime(2026, 11, 4, 10);
+    final timer = DailyTimerController(
+      repository: repository,
+      clock: () => now,
+    );
+    addTearDown(timer.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Center(child: ActivitiesTimerButton(timer: timer)),
+        home: ActivitiesScreen(
+          activities: const [
+            FirstActivity(name: 'Гитара', iconId: 'instrument', id: 'guitar'),
+            FirstActivity(name: 'Пианино', iconId: 'music', id: 'piano'),
+          ],
+          timerController: timer,
+          showTutorial: false,
         ),
       ),
     );
 
-    final timerButton = find.byKey(ActivitiesTimerButton.toggleButtonKey);
+    final timerButton = find.byKey(PopulatedActivitiesView.startSessionKey);
     await tester.tap(timerButton);
     await tester.pumpAndSettle();
-
-    expect(timer.lastSignal, MockTimerSignal.start);
-    expect(timer.isRunning, isTrue);
-    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
-
+    now = now.add(const Duration(minutes: 2));
     await tester.tap(timerButton);
     await tester.pumpAndSettle();
+    expect(find.byTooltip('Resume timer'), findsOneWidget);
 
-    expect(timer.lastSignal, MockTimerSignal.stop);
-    expect(timer.isRunning, isFalse);
-    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Пианино'), findsOneWidget);
+    expect(
+      find.byTooltip('Timer is active for another activity'),
+      findsOneWidget,
+    );
+    expect(timer.status, DailyTimerStatus.paused);
+    expect(timer.activeActivityId, 'guitar');
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(PopulatedActivitiesView.startSessionKey),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(timer.totalFor('guitar'), const Duration(minutes: 2));
+
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_0')));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Resume timer'), findsOneWidget);
   });
 
   testWidgets('Activities shows the visual activity goal and selector', (
@@ -195,20 +288,4 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
-
-  testWidgets('Practice timer starts and pauses without losing elapsed time', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: PracticeScreen(activityName: 'Гитара')),
-    );
-
-    await tester.tap(find.byKey(PracticeScreen.toggleButtonKey));
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.text('00:00:02'), findsOneWidget);
-
-    await tester.tap(find.byKey(PracticeScreen.toggleButtonKey));
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.text('00:00:02'), findsOneWidget);
-  });
 }

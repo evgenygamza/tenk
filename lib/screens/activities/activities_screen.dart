@@ -5,6 +5,9 @@ import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
 import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
+import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
+import 'package:tenk/features/timer/domain/models/daily_timer_data.dart';
+import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_question_mark.dart';
@@ -20,6 +23,7 @@ class ActivitiesScreen extends StatefulWidget {
     this.activityName,
     this.activityIconId = 'instrument',
     this.repository,
+    this.timerController,
     this.showTutorial = false,
   });
 
@@ -39,6 +43,7 @@ class ActivitiesScreen extends StatefulWidget {
   final String? activityName;
   final String activityIconId;
   final FirstActivityRepository? repository;
+  final DailyTimerController? timerController;
   final bool showTutorial;
 
   @override
@@ -51,10 +56,16 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   bool _isCreating = false;
   bool _showTutorial = false;
   int? _editingIndex;
+  late final DailyTimerController _timerController;
+  late final bool _ownsTimerController;
 
   @override
   void initState() {
     super.initState();
+    _ownsTimerController = widget.timerController == null;
+    _timerController =
+        widget.timerController ??
+        DailyTimerController(repository: _EphemeralDailyTimerRepository());
     _activities = List.of(widget.activities);
     _selectedIndex = _activities.isEmpty
         ? 0
@@ -67,6 +78,12 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         ),
       ];
     }
+  }
+
+  @override
+  void dispose() {
+    if (_ownsTimerController) _timerController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveActivity(FirstActivity activity) async {
@@ -96,6 +113,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Future<void> _selectActivity(int index) async {
+    if (index == _selectedIndex) return;
     setState(() {
       _selectedIndex = index;
       _showTutorial = false;
@@ -256,6 +274,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                 activities: _activities,
                 selectedIndex: _selectedIndex,
                 showTutorial: widget.showTutorial || _showTutorial,
+                timerController: _timerController,
                 onSelectActivity: _selectActivity,
                 onLongPressActivity: _showActivityMenu,
                 onAddActivity: _canAddActivity ? _openCreation : null,
@@ -408,4 +427,14 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       ],
     );
   }
+}
+
+class _EphemeralDailyTimerRepository implements DailyTimerRepository {
+  DailyTimerData _data = const DailyTimerData();
+
+  @override
+  Future<DailyTimerData> load() async => _data;
+
+  @override
+  Future<void> save(DailyTimerData data) async => _data = data;
 }
