@@ -24,15 +24,16 @@ Task: `#52` — Перейти на дневной учёт времени и е
 
 | Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
 | --- | --- | --- | --- | --- |
-| #52 — Start creates one running timer | Stopped timer; activity ID `activity-1` | Run `flutter test test/daily_timer_controller_test.dart`; start twice for different IDs | Only the first activity is active and one running timestamp is stored | NOT RUN — current two-state behavior is not implemented |
-| #52 — Stop ends tracking and preserves totals | Timer starts at 23:55 and stops at 00:10 | Run `flutter test test/daily_timer_controller_test.dart` | The timer returns to `stopped`; five minutes are stored on day one, ten on day two, and the total is 15 minutes | NOT RUN — current two-state behavior is not implemented |
-| #52 — Running state restores after restart | Timer starts at 10:00; app data persists | Relaunch app or restore controller from the repository at 10:07, then stop | Timer is still `running`; seven minutes are added to totals when stopped | NOT RUN — current two-state behavior is not implemented |
-| #52 — Stopped state restores after restart | Timer was stopped and app data persists | Relaunch app or restore controller from the repository | Timer restores as `stopped`; no activity remains active | NOT RUN — current two-state behavior is not implemented |
-| #52 — Persistent storage restores timer state | A running timer and one saved daily total | Run `flutter test test/shared_preferences_daily_timer_repository_test.dart` | The running activity, timestamp, and day total are restored from local storage | NOT RUN — current two-state behavior is not implemented |
-| #52 — Switch activities while timer runs | Two saved activities; first is selected | Start the timer, then select the second activity | Selection changes; the timer remains bound to the first activity and the second activity's timer button is disabled | PASS — covered by focused run (10 tests) |
-| #52 — Stop allows tracking another activity | Two saved activities; timer is running for the first | Stop the timer and select the second activity | The timer is `stopped`; the second activity can be started | NOT RUN — current two-state behavior is not implemented |
-| #52 — No session editor or running counter | Populated Activities | Inspect timer control while stopped and while running | Start and Stop are clearly announced; no digital elapsed counter or session save UI appears | NOT RUN — current two-state behavior is not implemented |
-| #52 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All widget and repository tests pass | NOT RUN — current two-state behavior is not implemented |
+| #52 — Start creates one running timer | Stopped timer; activity ID `activity-1` | Run `flutter test test/daily_timer_controller_test.dart`; start twice for different IDs | Only the first activity is active and one running timestamp is stored | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Stop ends tracking and preserves totals | Timer starts at 23:55 and stops at 00:05 | Run `flutter test test/daily_timer_controller_test.dart` | The timer returns to `stopped`; five minutes are stored on each day, for a total of 10 minutes | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Running state restores after restart | Timer starts at 10:00; app data persists | Relaunch app or restore controller from the repository at 10:07, then stop | Timer is still `running`; seven minutes are added to totals when stopped | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Stopped state restores after restart | Timer was stopped and app data persists | Relaunch app or restore controller from the repository | Timer restores as `stopped`; no activity remains active | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Legacy paused data migrates to stopped | Saved data has an active activity, no running timestamp, and existing totals | Run `flutter test test/daily_timer_controller_test.dart` | Timer restores as `stopped`; existing totals remain and the stale active activity is cleared | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Persistent storage restores timer state | A running timer and one saved daily total | Run `flutter test test/shared_preferences_daily_timer_repository_test.dart` | The running activity, timestamp, and day total are restored from local storage | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Switch activities while timer runs | Two saved activities; first is selected | Start the timer, then select the second activity | Selection changes; the timer remains bound to the first activity and the second activity's timer button is disabled | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Stop allows tracking another activity | Two saved activities; timer is running for the first | Stop the timer and select the second activity | The timer is `stopped`; the second activity can be started | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — No session editor or running counter | Populated Activities | Inspect timer control while stopped and while running | Start and Stop are clearly announced; no digital elapsed counter or session save UI appears | PASS — full suite, 43 tests (2026-11-04) |
+| #52 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All widget and repository tests pass | PASS — 43 tests (2026-11-04) |
 | #52 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
 
 Daily totals are persisted by activity ID and local calendar day. The timer has
@@ -40,6 +41,18 @@ only two states: `running` and `stopped`. Earlier test records may describe the
 superseded pause/resume behavior and do not verify this specification. The
 previous screen-local Practice prototype has been removed. The user runs checks
 and reports `OK` or `NOT OK`.
+
+## Activity editing and deletion
+
+Task: `#79` — Исправить редактирование и удаление активностей.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #79 — Long press opens actions while timer is stopped | Two saved activities; timer is stopped | Run `flutter test test/app_test.dart`; long press a selector icon | Edit and Delete actions appear | PASS — full suite, 43 tests (2026-11-04) |
+| #79 — Long press opens actions while timer is running | Two saved activities; start the timer | Run `flutter test test/home_practice_flow_test.dart`; long press a selector icon | Edit and Delete actions appear while the timer continues running | PASS — full suite, 43 tests (2026-11-04) |
+| #79 — Edit updates the selected activity | Two saved activities; timer is stopped | Run the edit scenario in `test/app_test.dart`; change the selected activity name and save | The selected activity is updated in place and remains selected | PASS — full suite, 43 tests (2026-11-04) |
+| #79 — Delete requires confirmation | Two saved activities; timer is stopped | Run the delete scenario in `test/app_test.dart`; cancel once, then confirm | Cancel preserves the list; confirmation deletes only the selected activity and updates selection | PASS — full suite, 43 tests (2026-11-04) |
+| #79 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All automated tests pass | PASS — 43 tests (2026-11-04) |
 
 ## First activity creation from Activities
 

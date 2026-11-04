@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:tenk/features/timer/domain/models/daily_timer_data.dart';
 import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 
-enum DailyTimerStatus { idle, running, paused }
+enum DailyTimerStatus { running, stopped }
 
 class DailyTimerController extends ChangeNotifier {
   DailyTimerController({
@@ -18,17 +18,18 @@ class DailyTimerController extends ChangeNotifier {
   DateTime? _runningSince;
 
   DailyTimerStatus get status => _activeActivityId == null
-      ? DailyTimerStatus.idle
-      : _runningSince == null
-      ? DailyTimerStatus.paused
+      ? DailyTimerStatus.stopped
       : DailyTimerStatus.running;
 
   String? get activeActivityId => _activeActivityId;
 
   Future<void> load() async {
     final data = await _repository.load();
-    _activeActivityId = data.activeActivityId;
-    _runningSince = data.runningSinceMilliseconds == null
+    final wasPaused =
+        data.activeActivityId != null && data.runningSinceMilliseconds == null;
+    _activeActivityId = wasPaused ? null : data.activeActivityId;
+    _runningSince =
+        _activeActivityId == null || data.runningSinceMilliseconds == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(data.runningSinceMilliseconds!);
     _totals
@@ -37,30 +38,25 @@ class DailyTimerController extends ChangeNotifier {
         for (final entry in data.totals.entries)
           entry.key: Map<String, int>.of(entry.value),
       });
+    if (wasPaused) await _persist();
     notifyListeners();
   }
 
   Future<void> start(String activityId) async {
-    if (status != DailyTimerStatus.idle) return;
+    if (status != DailyTimerStatus.stopped) return;
     _activeActivityId = activityId;
     _runningSince = _clock();
     await _persist();
     notifyListeners();
   }
 
-  Future<void> pause() async {
+  Future<void> stop() async {
     final start = _runningSince;
     final activityId = _activeActivityId;
     if (start == null || activityId == null) return;
     _addInterval(activityId, start, _clock());
+    _activeActivityId = null;
     _runningSince = null;
-    await _persist();
-    notifyListeners();
-  }
-
-  Future<void> resume() async {
-    if (status != DailyTimerStatus.paused) return;
-    _runningSince = _clock();
     await _persist();
     notifyListeners();
   }

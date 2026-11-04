@@ -253,11 +253,7 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                                 activities: widget.activities,
                                 selectedIndex: widget.selectedIndex,
                                 onSelected: widget.onSelectActivity,
-                                onLongPressActivity:
-                                    widget.timerController.status ==
-                                        DailyTimerStatus.idle
-                                    ? widget.onLongPressActivity
-                                    : null,
+                                onLongPressActivity: widget.onLongPressActivity,
                               ),
                               SizedBox(width: compact ? 10 : 14),
                               if (widget.showAddActivity)

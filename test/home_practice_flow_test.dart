@@ -58,9 +58,7 @@ void main() {
     expect(find.byKey(PopulatedActivitiesView.startSessionKey), findsOneWidget);
   });
 
-  testWidgets('Activities timer starts, pauses, and resumes in place', (
-    tester,
-  ) async {
+  testWidgets('Activities timer starts and stops in place', (tester) async {
     await pumpActivities(tester, showTutorial: false);
 
     final timerButton = find.byKey(PopulatedActivitiesView.startSessionKey);
@@ -71,16 +69,14 @@ void main() {
     expect(find.byKey(ActivitiesScreen.screenKey), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
     expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+    expect(find.byTooltip('Stop timer'), findsOneWidget);
     expect(find.text('00:00:00'), findsNothing);
 
     await tester.tap(timerButton);
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
-    expect(find.byTooltip('Resume timer'), findsOneWidget);
-    await tester.tap(timerButton);
-    await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+    expect(find.byTooltip('Start timer'), findsOneWidget);
   });
 
   testWidgets(
@@ -118,6 +114,7 @@ void main() {
         find.byTooltip('Timer is active for another activity'),
         findsOneWidget,
       );
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(
@@ -129,7 +126,7 @@ void main() {
     },
   );
 
-  testWidgets('switching activities after pause preserves the paused timer', (
+  testWidgets('stopping allows another activity timer to start', (
     tester,
   ) async {
     final repository = _MemoryTimerRepository();
@@ -156,10 +153,6 @@ void main() {
     await tester.tap(timerButton);
     await tester.pumpAndSettle();
     now = now.add(const Duration(minutes: 2));
-    await tester.tap(timerButton);
-    await tester.pumpAndSettle();
-    expect(find.byTooltip('Resume timer'), findsOneWidget);
-
     await tester.tap(find.byKey(const ValueKey('activities_selector_item_1')));
     await tester.pumpAndSettle();
 
@@ -168,7 +161,7 @@ void main() {
       find.byTooltip('Timer is active for another activity'),
       findsOneWidget,
     );
-    expect(timer.status, DailyTimerStatus.paused);
+    expect(timer.status, DailyTimerStatus.running);
     expect(timer.activeActivityId, 'guitar');
     expect(
       tester
@@ -182,7 +175,60 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('activities_selector_item_0')));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Resume timer'), findsOneWidget);
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+    expect(timer.status, DailyTimerStatus.stopped);
+    expect(timer.activeActivityId, isNull);
+    expect(timer.totalFor('guitar'), const Duration(minutes: 2));
+
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_1')));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Start timer'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(PopulatedActivitiesView.startSessionKey),
+          )
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+    expect(timer.status, DailyTimerStatus.running);
+    expect(timer.activeActivityId, 'piano');
+  });
+
+  testWidgets('long press opens activity menu while timer is running', (
+    tester,
+  ) async {
+    final timer = DailyTimerController(
+      repository: _MemoryTimerRepository(),
+      clock: () => DateTime(2026, 11, 4, 10),
+    );
+    addTearDown(timer.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ActivitiesScreen(
+          activities: const [
+            FirstActivity(name: 'Гитара', iconId: 'instrument', id: 'guitar'),
+            FirstActivity(name: 'Пианино', iconId: 'music', id: 'piano'),
+          ],
+          timerController: timer,
+          showTutorial: false,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(PopulatedActivitiesView.startSessionKey));
+    await tester.pumpAndSettle();
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(timer.status, DailyTimerStatus.running);
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
   });
 
   testWidgets('Activities shows the visual activity goal and selector', (

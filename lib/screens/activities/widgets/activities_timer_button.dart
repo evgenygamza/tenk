@@ -23,15 +23,15 @@ class ActivitiesTimerButton extends StatelessWidget {
     final actionLabel = !isForActiveActivity
         ? 'Timer is active for another activity'
         : switch (status) {
-            DailyTimerStatus.idle => 'Start timer',
-            DailyTimerStatus.running => 'Pause timer',
-            DailyTimerStatus.paused => 'Resume timer',
+            DailyTimerStatus.stopped => 'Start timer',
+            DailyTimerStatus.running => 'Stop timer',
           };
-    final icon = switch (status) {
-      DailyTimerStatus.idle => Icons.play_arrow_rounded,
-      DailyTimerStatus.running => Icons.pause_rounded,
-      DailyTimerStatus.paused => Icons.play_arrow_rounded,
-    };
+    final icon = !isForActiveActivity
+        ? Icons.play_arrow_rounded
+        : switch (status) {
+            DailyTimerStatus.stopped => Icons.play_arrow_rounded,
+            DailyTimerStatus.running => Icons.pause_rounded,
+          };
 
     return Tooltip(
       message: actionLabel,
@@ -47,14 +47,11 @@ class ActivitiesTimerButton extends StatelessWidget {
             onPressed: isForActiveActivity
                 ? () {
                     switch (status) {
-                      case DailyTimerStatus.idle:
+                      case DailyTimerStatus.stopped:
                         timerController.start(activityId);
                         break;
                       case DailyTimerStatus.running:
-                        timerController.pause();
-                        break;
-                      case DailyTimerStatus.paused:
-                        timerController.resume();
+                        timerController.stop();
                         break;
                     }
                   }
