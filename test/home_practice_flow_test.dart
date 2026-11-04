@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
+import 'package:tenk/screens/activities/widgets/activities_timer_button.dart';
 import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/ui/deprecated/practice_screen_prototype.dart';
 
@@ -43,20 +44,53 @@ void main() {
     expect(find.byKey(PopulatedActivitiesView.startSessionKey), findsOneWidget);
   });
 
-  testWidgets(
-    'Practice remains on Activities until the timer widget is added',
-    (tester) async {
-      await pumpActivities(tester, showTutorial: false);
+  testWidgets('Activities toggles its MVP timer without opening Practice', (
+    tester,
+  ) async {
+    await pumpActivities(tester, showTutorial: false);
 
-      await tester.tap(find.byKey(PopulatedActivitiesView.startSessionKey));
-      await tester.pumpAndSettle();
+    final timerButton = find.byKey(PopulatedActivitiesView.startSessionKey);
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
 
-      expect(find.byType(ActivitiesScreen), findsOneWidget);
-      expect(find.byKey(PracticeScreen.screenKey), findsNothing);
-      expect(find.text('Гитара'), findsOneWidget);
-      expect(find.text('Start Session'), findsOneWidget);
-    },
-  );
+    expect(find.byType(ActivitiesScreen), findsOneWidget);
+    expect(find.byKey(PracticeScreen.screenKey), findsNothing);
+    expect(find.text('Гитара'), findsOneWidget);
+    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+  });
+
+  testWidgets('Timer button sends Start and Stop to the mock timer', (
+    tester,
+  ) async {
+    final timer = MockActivitiesTimer();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(child: ActivitiesTimerButton(timer: timer)),
+        ),
+      ),
+    );
+
+    final timerButton = find.byKey(ActivitiesTimerButton.toggleButtonKey);
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+
+    expect(timer.lastSignal, MockTimerSignal.start);
+    expect(timer.isRunning, isTrue);
+    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+
+    await tester.tap(timerButton);
+    await tester.pumpAndSettle();
+
+    expect(timer.lastSignal, MockTimerSignal.stop);
+    expect(timer.isRunning, isFalse);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+  });
 
   testWidgets('Activities shows the visual activity goal and selector', (
     tester,

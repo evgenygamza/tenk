@@ -14,7 +14,9 @@ and 10,000-hour Greek temple are separate
 illustrated assets with their lettering included. The empty state uses a small
 floating question mark at the same summit anchor. Add a new designed asset for
 each additional milestone. ETA remains a visual placeholder.
-The Start Session control is reserved for a future timer widget. The
+The populated view includes a large round start/stop control connected to a
+screen-local mock timer. The mock tracks only its running state and does not
+count or save time; the full shared timer is tracked in issue #40. The
 dismissible first-practice tutorial remains available after activity creation.
 
 
