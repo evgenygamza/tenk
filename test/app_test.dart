@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
@@ -11,21 +12,38 @@ import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class _Repository implements FirstActivityRepository {
-  FirstActivity? activity;
+  List<FirstActivity> activities = [];
+  int selectedIndex = 0;
+  FirstActivity? get activity => activities.isEmpty ? null : activities.first;
+  set activity(FirstActivity? value) =>
+      activities = value == null ? [] : [value];
   int loads = 0;
   bool fail = false;
-  Completer<FirstActivity?>? pending;
+  Completer<List<FirstActivity>>? pending;
 
   @override
-  Future<FirstActivity?> loadActivity() async {
+  Future<List<FirstActivity>> loadActivities() async {
     loads++;
     if (fail) throw Exception('read failed');
-    return pending == null ? activity : pending!.future;
+    return pending == null ? activities : pending!.future;
   }
 
   @override
-  Future<void> saveActivity(FirstActivity activity) async =>
-      this.activity = activity;
+  Future<void> saveActivities(
+    List<FirstActivity> activities, {
+    int? selectedIndex,
+  }) async {
+    this.activities = List.of(activities);
+    this.selectedIndex =
+        selectedIndex ?? (activities.isEmpty ? 0 : activities.length - 1);
+  }
+
+  @override
+  Future<int> loadSelectedActivityIndex() async => selectedIndex;
+
+  @override
+  Future<void> saveSelectedActivityIndex(int index) async =>
+      selectedIndex = index;
 }
 
 void main() {
@@ -86,13 +104,14 @@ void main() {
   );
 
   testWidgets('waits for loading without flashing onboarding', (tester) async {
-    final repository = _Repository()..pending = Completer<FirstActivity?>();
+    final repository = _Repository()
+      ..pending = Completer<List<FirstActivity>>();
     await tester.pumpWidget(App(firstActivityRepository: repository));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byType(WelcomeScreen), findsNothing);
-    repository.pending!.complete(
+    repository.pending!.complete([
       const FirstActivity(name: 'Гитара', iconId: 'instrument'),
-    );
+    ]);
     await tester.pumpAndSettle();
     expect(find.byType(PopulatedActivitiesView), findsOneWidget);
     expect(find.text('Гитара'), findsOneWidget);
@@ -132,6 +151,180 @@ void main() {
       isFalse,
     );
     expect(repository.loads, 2);
+  });
+
+  testWidgets('filled Activities adds, switches, and restores activities', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..activities = [
+        const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+      ];
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+    expect(find.text('Гитара'), findsOneWidget);
+
+    await tester.tap(find.byKey(PopulatedActivitiesView.addActivityVisualKey));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(CreateActivityScreen.nameFieldKey),
+      'Пианино',
+    );
+    final saveButton = find.byKey(CreateActivityScreen.saveButtonKey);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(repository.activities, hasLength(2));
+    expect(find.text('Пианино'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Гитара'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_1')));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+    expect(find.text('Пианино'), findsOneWidget);
+    expect(repository.selectedIndex, 1);
+  });
+
+  testWidgets('hides add control when five activities are saved', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..activities = List.generate(
+        ActivitiesScreen.maxActivities,
+        (index) => FirstActivity(name: 'Activity $index', iconId: 'instrument'),
+      );
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(PopulatedActivitiesView.activitySelectorKey),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(PopulatedActivitiesView.addActivityVisualKey),
+      findsNothing,
+    );
+  });
+
+  testWidgets('long press edits the selected activity in place', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..activities = [
+        const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+        const FirstActivity(name: 'Пианино', iconId: 'music'),
+      ]
+      ..selectedIndex = 1;
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_1')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edit activity'), findsOneWidget);
+    final nameField = tester.widget<TextField>(
+      find.byKey(CreateActivityScreen.nameFieldKey),
+    );
+    expect(nameField.controller!.text, 'Пианино');
+    await tester.enterText(
+      find.byKey(CreateActivityScreen.nameFieldKey),
+      'Электропиано',
+    );
+    final saveButton = find.byKey(CreateActivityScreen.saveButtonKey);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(repository.activities, [
+      const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+      const FirstActivity(name: 'Электропиано', iconId: 'music'),
+    ]);
+    expect(repository.selectedIndex, 1);
+  });
+
+  testWidgets('long-press menu matches the Activities glass design', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..activities = [
+        const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+      ];
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_0')),
+    );
+    await tester.pumpAndSettle();
+
+    final menuPanels = tester
+        .widgetList<Material>(find.byType(Material))
+        .where((material) => material.color == appContextMenuColor)
+        .toList();
+    expect(menuPanels, hasLength(1));
+    expect(menuPanels.single.elevation, 16);
+    expect(menuPanels.single.shape, isA<RoundedRectangleBorder>());
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+  });
+
+  testWidgets('long press deletes an activity after confirmation', (
+    tester,
+  ) async {
+    final repository = _Repository()
+      ..activities = [
+        const FirstActivity(name: 'Гитара', iconId: 'instrument'),
+        const FirstActivity(name: 'Пианино', iconId: 'music'),
+      ]
+      ..selectedIndex = 1;
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_0')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(repository.activities, hasLength(2));
+
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_0')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ActivitiesScreen.deleteConfirmButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(repository.activities, [
+      const FirstActivity(name: 'Пианино', iconId: 'music'),
+    ]);
+    expect(repository.selectedIndex, 0);
+
+    await tester.longPress(
+      find.byKey(const ValueKey('activities_selector_item_0')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ActivitiesScreen.deleteConfirmButtonKey));
+    await tester.pumpAndSettle();
+    expect(repository.activities, isEmpty);
+    expect(find.byKey(ActivitiesScreen.emptyStateKey), findsOneWidget);
   });
 
   testWidgets('blank stored name keeps creation accessible', (tester) async {

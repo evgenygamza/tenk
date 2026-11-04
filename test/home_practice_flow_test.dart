@@ -70,8 +70,10 @@ void main() {
       expect(find.bySemanticsLabel('100 hours'), findsOneWidget);
       expect(find.text('18 days to your goal'), findsOneWidget);
       expect(find.byIcon(Icons.library_music), findsAtLeastNWidgets(1));
-      expect(find.byIcon(Icons.music_note), findsOneWidget);
-      expect(find.byIcon(Icons.directions_run), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('activities_selector_item_0')),
+        findsOneWidget,
+      );
       expect(find.byKey(ActivityLandmark.landmarkKey), findsOneWidget);
       expect(
         find.byKey(PopulatedActivitiesView.activitySelectorKey),

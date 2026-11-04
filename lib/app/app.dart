@@ -17,7 +17,10 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   late final FirstActivityRepository _repository;
-  late Future<({FirstActivity? activity, bool failed})> _activity;
+  late Future<
+    ({List<FirstActivity> activities, int selectedIndex, bool failed})
+  >
+  _activities;
 
   @override
   void initState() {
@@ -25,14 +28,23 @@ class _AppState extends State<App> {
     _repository =
         widget.firstActivityRepository ??
         SharedPreferencesFirstActivityRepository();
-    _activity = _loadActivity();
+    _activities = _loadActivities();
   }
 
-  Future<({FirstActivity? activity, bool failed})> _loadActivity() async {
+  Future<({List<FirstActivity> activities, int selectedIndex, bool failed})>
+  _loadActivities() async {
     try {
-      return (activity: await _repository.loadActivity(), failed: false);
+      return (
+        activities: await _repository.loadActivities(),
+        selectedIndex: await _repository.loadSelectedActivityIndex(),
+        failed: false,
+      );
     } catch (_) {
-      return (activity: null, failed: true);
+      return (
+        activities: const <FirstActivity>[],
+        selectedIndex: 0,
+        failed: true,
+      );
     }
   }
 
@@ -42,52 +54,55 @@ class _AppState extends State<App> {
       debugShowCheckedModeBanner: false,
       title: 'TenK',
       theme: buildAppTheme(),
-      home: FutureBuilder<({FirstActivity? activity, bool failed})>(
-        future: _activity,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (snapshot.data!.failed) {
-            return Scaffold(
-              body: SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(28),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Could not load your activity',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineLarge,
+      home:
+          FutureBuilder<
+            ({List<FirstActivity> activities, int selectedIndex, bool failed})
+          >(
+            future: _activities,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.data!.failed) {
+                return Scaffold(
+                  body: SafeArea(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(28),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Could not load your activity',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineLarge,
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: () => setState(() {
+                                _activities = _loadActivities();
+                              }),
+                              child: const Text('Try again'),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: () => setState(() {
-                            _activity = _loadActivity();
-                          }),
-                          child: const Text('Try again'),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          }
-          final activity = snapshot.data!.activity;
-          return activity == null || activity.name.trim().isEmpty
-              ? WelcomeScreen(repository: _repository)
-              : ActivitiesScreen(
-                  activityName: activity.name,
-                  activityIconId: activity.iconId,
-                  repository: _repository,
                 );
-        },
-      ),
+              }
+              final activities = snapshot.data!.activities;
+              return activities.isEmpty || activities.first.name.trim().isEmpty
+                  ? WelcomeScreen(repository: _repository)
+                  : ActivitiesScreen(
+                      activities: activities,
+                      selectedIndex: snapshot.data!.selectedIndex,
+                      repository: _repository,
+                    );
+            },
+          ),
     );
   }
 }

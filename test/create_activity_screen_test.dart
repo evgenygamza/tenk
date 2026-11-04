@@ -14,22 +14,37 @@ class _FakeRepository implements FirstActivityRepository {
   final saveCalls = <FirstActivity>[];
   Completer<void>? pendingSave;
   bool failNextSave = false;
-  FirstActivity? storedActivity;
+  List<FirstActivity> storedActivities = [];
+  int selectedIndex = 0;
+  FirstActivity? get storedActivity =>
+      storedActivities.isEmpty ? null : storedActivities.last;
 
   @override
-  Future<FirstActivity?> loadActivity() async => storedActivity;
+  Future<List<FirstActivity>> loadActivities() async => storedActivities;
 
   @override
-  Future<void> saveActivity(FirstActivity activity) async {
-    saveCalls.add(activity);
+  Future<void> saveActivities(
+    List<FirstActivity> activities, {
+    int? selectedIndex,
+  }) async {
+    saveCalls.addAll(activities.skip(storedActivities.length));
     final pending = pendingSave;
     if (pending != null) await pending.future;
     if (failNextSave) {
       failNextSave = false;
       throw Exception('save failed');
     }
-    storedActivity = activity;
+    storedActivities = List.of(activities);
+    this.selectedIndex =
+        selectedIndex ?? (activities.isEmpty ? 0 : activities.length - 1);
   }
+
+  @override
+  Future<int> loadSelectedActivityIndex() async => selectedIndex;
+
+  @override
+  Future<void> saveSelectedActivityIndex(int index) async =>
+      selectedIndex = index;
 }
 
 Future<void> _openCreateActivity(

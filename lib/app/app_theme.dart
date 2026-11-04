@@ -9,7 +9,12 @@ const appPanelTileColor = Color(0x33FFFFFF);
 const appPanelSelectedTileColor = Color(0x9E9DCF7E);
 const appPanelFieldColor = Color(0x7AFFFFFF);
 const appPanelControlBorderColor = Color(0x73FFFFFF);
+const appContextMenuColor = Color(0xDBFFFFFF);
+const appContextMenuBorderColor = Color(0xCCFFFFFF);
+const appContextMenuShadowColor = Color(0x55243F2A);
+const appDestructiveActionColor = Color(0xFF98584D);
 const appPanelRadius = 28.0;
+const appContextMenuRadius = 18.0;
 const appPanelBlurSigma = 16.0;
 
 ThemeData buildAppTheme() {

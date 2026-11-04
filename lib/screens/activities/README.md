@@ -1,11 +1,14 @@
 # Activities screen
 
 One page with empty and populated states. Welcome opens the empty state, which
-has a visible back button to return to Welcome; a saved activity opens the
-populated state. The empty-state add button opens the first-activity form as an
-glass-panel overlay on this page. The form saves a selected monochrome icon
-and a name of up to 40 visible characters; cancel returns to the empty state
-without saving.
+has a visible back button to return to Welcome; saved activities open the
+populated state. The shared add button opens the activity form over either
+state. Each saved activity joins the list, becomes selected, and can be chosen
+from the animated icon selector. Up to five activities are supported; adding
+is hidden at the limit. The selected activity and full list persist between
+launches. Long-press an activity icon to edit or delete that activity. Editing
+opens the form prefilled with its current name and icon. Deletion requires
+confirmation; removing the last activity returns to the empty Activities state.
 
 The populated state shows the current activity name and monochrome icon with
 its visual goal summary.

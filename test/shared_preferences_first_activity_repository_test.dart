@@ -15,33 +15,32 @@ void main() {
     SharedPreferencesAsyncPlatform.instance = null;
   });
 
+  test('stores the full activity list and selected index', () async {
+    final repository = SharedPreferencesFirstActivityRepository();
+    const guitar = FirstActivity(name: 'Гитара', iconId: 'instrument');
+    const piano = FirstActivity(name: 'Пианино', iconId: 'music');
+
+    expect(await repository.loadActivities(), isEmpty);
+    await repository.saveActivities([guitar, piano]);
+    await repository.saveSelectedActivityIndex(0);
+
+    expect(await repository.loadActivities(), [guitar, piano]);
+    expect(await repository.loadSelectedActivityIndex(), 0);
+  });
+
   test(
-    'stores an activity name and icon and replaces both on a later save',
+    'loads a legacy single activity and supplies its default icon',
     () async {
-      final repository = SharedPreferencesFirstActivityRepository();
+      final preferences = SharedPreferencesAsync();
+      await preferences.setString('first_activity_name', 'Гитара');
+      final repository = SharedPreferencesFirstActivityRepository(
+        preferences: preferences,
+      );
 
-      expect(await repository.loadActivity(), isNull);
-
-      const guitar = FirstActivity(name: 'Гитара', iconId: 'instrument');
-      await repository.saveActivity(guitar);
-      expect(await repository.loadActivity(), guitar);
-
-      const piano = FirstActivity(name: 'Пианино', iconId: 'music');
-      await repository.saveActivity(piano);
-      expect(await repository.loadActivity(), piano);
+      expect(await repository.loadActivities(), [
+        const FirstActivity(name: 'Гитара', iconId: 'sparkles'),
+      ]);
+      expect(await repository.loadSelectedActivityIndex(), 0);
     },
   );
-
-  test('loads an existing name with the default icon', () async {
-    final preferences = SharedPreferencesAsync();
-    await preferences.setString('first_activity_name', 'Гитара');
-    final repository = SharedPreferencesFirstActivityRepository(
-      preferences: preferences,
-    );
-
-    expect(
-      await repository.loadActivity(),
-      const FirstActivity(name: 'Гитара', iconId: 'sparkles'),
-    );
-  });
 }
