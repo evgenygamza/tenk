@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
+import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
@@ -15,6 +16,7 @@ class PopulatedActivitiesView extends StatefulWidget {
   const PopulatedActivitiesView({
     super.key,
     required this.activities,
+    required this.timerController,
     this.selectedIndex = 0,
     this.showTutorial = false,
     this.onPreviewBack,
@@ -37,6 +39,7 @@ class PopulatedActivitiesView extends StatefulWidget {
   static const backgroundAsset = ActivityIsland.backgroundAsset;
 
   final List<FirstActivity> activities;
+  final DailyTimerController timerController;
   final int selectedIndex;
   final bool showTutorial;
   final VoidCallback? onPreviewBack;
@@ -52,13 +55,11 @@ class PopulatedActivitiesView extends StatefulWidget {
 
 class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   late bool _showTutorial;
-  late final MockActivitiesTimer _timer;
 
   @override
   void initState() {
     super.initState();
     _showTutorial = widget.showTutorial;
-    _timer = MockActivitiesTimer();
   }
 
   @override
@@ -71,6 +72,13 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.timerController,
+      builder: (context, _) => _buildView(context),
+    );
+  }
+
+  Widget _buildView(BuildContext context) {
     final selectedActivity = widget.activities[widget.selectedIndex];
     return Stack(
       key: PopulatedActivitiesView.viewKey,
@@ -209,7 +217,10 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                         ),
                         SizedBox(height: compact ? 2 : 4),
                         const Spacer(flex: 2),
-                        ActivitiesTimerButton(timer: _timer),
+                        ActivitiesTimerButton(
+                          timerController: widget.timerController,
+                          activityId: selectedActivity.id,
+                        ),
                         SizedBox(height: compact ? 14 : 20),
                         Text(
                           'Every hour brings you closer\nto mastery.',
@@ -242,7 +253,11 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                                 activities: widget.activities,
                                 selectedIndex: widget.selectedIndex,
                                 onSelected: widget.onSelectActivity,
-                                onLongPressActivity: widget.onLongPressActivity,
+                                onLongPressActivity:
+                                    widget.timerController.status ==
+                                        DailyTimerStatus.idle
+                                    ? widget.onLongPressActivity
+                                    : null,
                               ),
                               SizedBox(width: compact ? 10 : 14),
                               if (widget.showAddActivity)
@@ -284,7 +299,7 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Start your first session to begin your journey.',
+            'Start tracking your first activity to begin your journey.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: appInkColor),

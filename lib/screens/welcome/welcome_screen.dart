@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
+import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/ui/widgets/liquid_glass_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key, required this.repository});
+  const WelcomeScreen({
+    super.key,
+    required this.repository,
+    required this.timerController,
+  });
 
   final FirstActivityRepository repository;
+  final DailyTimerController timerController;
 
   static const routeName = '/';
   static const startButtonKey = Key('welcome_start_button');
@@ -114,8 +120,10 @@ class WelcomeScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      ActivitiesScreen(repository: repository),
+                                  builder: (_) => ActivitiesScreen(
+                                    repository: repository,
+                                    timerController: timerController,
+                                  ),
                                 ),
                               );
                             },

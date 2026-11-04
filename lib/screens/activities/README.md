@@ -11,11 +11,14 @@ opens the form prefilled with its current name and icon. Deletion requires
 confirmation; removing the last activity returns to the empty Activities state.
 
 The populated state shows the current activity name and monochrome icon with
-its visual goal summary. A large round button above the central message sends
-Start and Stop signals to a screen-local mock timer. Its icon reflects the
-mock's running state; it does not count time or save sessions. Real timer state,
-activity association, cross-screen continuation, and session persistence belong
-to the full timer work in issue #40.
+its visual goal summary. The large round control manages the app-wide timer:
+Start begins tracking the selected activity, Pause adds elapsed time to daily
+totals, and Resume continues the same timer. The timer uses stored timestamps,
+restores after restart, and splits elapsed time at local midnight. Activity
+activity selection remains available while the timer runs or is paused. The
+timer stays bound to its original activity; its button is disabled on other
+activities and shows Pause or Resume again when that activity is selected. No
+session records or digital running counter are shown.
 `ActivityIsland` uses the same clean island background as Welcome and anchors a
 separate `ActivityLandmark` at the summit using artwork coordinates. The 100-
 hour marker and 10,000-hour Greek temple are distinct illustrated assets with
@@ -25,7 +28,5 @@ over `ActivityIsland.roadEndpointAnchor`, the normalized path-tip coordinate.
 The anchor is transformed through the same `BoxFit.cover` calculation as the
 background, so it tracks the visible path tip after screen cropping. Add a
 dedicated asset when introducing a milestone.
-The deprecated Practice timer prototype remains under `lib/ui/deprecated/` as a
-reference for #40. The MVP button in #69 only exercises mock Start/Stop
-signals; #40 will replace it with shared session management and remove the
-prototype.
+The deprecated Practice timer prototype was removed when the shared timer was
+implemented for #52.

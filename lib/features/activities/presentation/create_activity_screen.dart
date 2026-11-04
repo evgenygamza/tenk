@@ -76,7 +76,13 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
       _isSaving = true;
     });
 
-    final activity = FirstActivity(name: name, iconId: _iconId);
+    final activity = FirstActivity(
+      id:
+          widget.initialActivity?.id ??
+          'activity-${DateTime.now().microsecondsSinceEpoch}',
+      name: name,
+      iconId: _iconId,
+    );
     try {
       await widget.onSaved(activity);
       if (!mounted) return;

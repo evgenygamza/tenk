@@ -8,8 +8,8 @@ The current first-use path is being delivered in steps:
 1. Welcome.
 2. Open the empty Activities screen.
 3. Create the first activity from its add button (issue #59).
-4. Show the populated Activities state with an MVP start/stop button connected
-   to a mock timer (issue #69); full session management remains in issue #40.
+4. Use one persistent timer in Activities to add elapsed time to daily activity
+   totals (issue #52).
 
 ## Code layout
 
@@ -17,12 +17,12 @@ The current first-use path is being delivered in steps:
 lib/
 ├── app/                    # App setup and theme
 ├── features/
-│   └── activities/         # Activity data and repository
+│   ├── activities/         # Activity data and repository
+│   └── timer/              # Persistent daily timer and totals
 ├── screens/
 │   ├── activities/         # Empty and populated Activities states
 │   └── welcome/            # First-launch welcome
 ├── ui/
-│   ├── deprecated/         # Practice timer prototype pending #40
 │   └── widgets/            # Reusable and embedded UI
 └── main.dart               # App entry point
 ```
@@ -36,11 +36,11 @@ the shared Liquid Glass action button. The illustration stays separate from
 the accessible text and interactive controls.
 
 Activities is the main activity page, with empty and populated states. The
-populated state includes a large round control that sends Start and Stop signals
-to an in-memory mock timer. It reflects whether the mock is running but does not
-count or save elapsed time. The deprecated Practice timer prototype is retained
-as a reference for the full shared timer in #40. Saving a
-session, history, settings, statistics, and workshop evolution are deferred.
+populated state uses one shared timer. Start, Pause, and Resume control the same
+activity timer; elapsed time is calculated from stored timestamps and added to
+daily totals, including when it crosses local midnight. Timer state and totals
+restore after an app restart. The app does not create session records or show a
+running digital counter.
 
 On startup, TenK loads the first activity from local storage before choosing a
 screen. Without an activity (including a blank stored name), it opens Welcome.

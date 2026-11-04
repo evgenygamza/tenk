@@ -3,13 +3,21 @@ import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/activities/data/repositories/shared_preferences_first_activity_repository.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
+import 'package:tenk/features/timer/data/repositories/shared_preferences_daily_timer_repository.dart';
+import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
+import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
 
 class App extends StatefulWidget {
-  const App({super.key, this.firstActivityRepository});
+  const App({
+    super.key,
+    this.firstActivityRepository,
+    this.dailyTimerRepository,
+  });
 
   final FirstActivityRepository? firstActivityRepository;
+  final DailyTimerRepository? dailyTimerRepository;
 
   @override
   State<App> createState() => _AppState();
@@ -17,10 +25,17 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   late final FirstActivityRepository _repository;
+  late final DailyTimerController _timerController;
   late Future<
     ({List<FirstActivity> activities, int selectedIndex, bool failed})
   >
   _activities;
+
+  @override
+  void dispose() {
+    _timerController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -28,12 +43,18 @@ class _AppState extends State<App> {
     _repository =
         widget.firstActivityRepository ??
         SharedPreferencesFirstActivityRepository();
+    _timerController = DailyTimerController(
+      repository:
+          widget.dailyTimerRepository ??
+          SharedPreferencesDailyTimerRepository(),
+    );
     _activities = _loadActivities();
   }
 
   Future<({List<FirstActivity> activities, int selectedIndex, bool failed})>
   _loadActivities() async {
     try {
+      await _timerController.load();
       return (
         activities: await _repository.loadActivities(),
         selectedIndex: await _repository.loadSelectedActivityIndex(),
@@ -95,11 +116,15 @@ class _AppState extends State<App> {
               }
               final activities = snapshot.data!.activities;
               return activities.isEmpty || activities.first.name.trim().isEmpty
-                  ? WelcomeScreen(repository: _repository)
+                  ? WelcomeScreen(
+                      repository: _repository,
+                      timerController: _timerController,
+                    )
                   : ActivitiesScreen(
                       activities: activities,
                       selectedIndex: snapshot.data!.selectedIndex,
                       repository: _repository,
+                      timerController: _timerController,
                     );
             },
           ),

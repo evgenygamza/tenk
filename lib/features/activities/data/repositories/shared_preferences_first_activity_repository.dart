@@ -27,9 +27,11 @@ class SharedPreferencesFirstActivityRepository
       return values
           .map((value) {
             final activity = value as Map<String, dynamic>;
+            final index = values.indexOf(value);
             return FirstActivity(
               name: activity['name'] as String,
               iconId: activity['iconId'] as String,
+              id: activity['id'] as String? ?? 'legacy-$index',
             );
           })
           .toList(growable: false);
@@ -41,6 +43,7 @@ class SharedPreferencesFirstActivityRepository
       FirstActivity(
         name: name,
         iconId: await _preferences.getString(_legacyIconIdKey) ?? 'sparkles',
+        id: 'legacy-0',
       ),
     ];
   }
@@ -79,7 +82,13 @@ class SharedPreferencesFirstActivityRepository
   String _encodeActivities(List<FirstActivity> activities, int selectedIndex) {
     return jsonEncode({
       'activities': activities
-          .map((activity) => {'name': activity.name, 'iconId': activity.iconId})
+          .map(
+            (activity) => {
+              'id': activity.id,
+              'name': activity.name,
+              'iconId': activity.iconId,
+            },
+          )
           .toList(growable: false),
       'selectedIndex': selectedIndex,
     });

@@ -6,6 +6,8 @@ Task: `#69` — Добавить MVP-кнопку запуска и остано
 
 Branch: `task/69-activities-mvp-timer-button`.
 
+Historical #69 mock behavior; replaced by the #52 daily timer below.
+
 | Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
 | --- | --- | --- | --- | --- |
 | #69 — Button sends Start and Stop to the mock | Populated Activities; mock timer starts idle | Run `flutter test test/home_practice_flow_test.dart`; tap the timer control twice | The mock receives Start then Stop, and the button changes Play → Stop → Play | NOT RUN |
@@ -13,10 +15,28 @@ Branch: `task/69-activities-mvp-timer-button`.
 | #69 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All automated tests pass | NOT RUN |
 | #69 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
 
-The mock receiver stores only its running state and most recent signal. It does
-not count elapsed time, associate a session with an activity, or persist data;
-those behaviors remain in issue #40. The user runs checks and reports `OK` or
-`NOT OK`.
+Issue #52 replaces the mock receiver with a persistent daily timer. The earlier
+MVP button scenarios are historical and no longer describe the current control.
+
+## Daily timer and activity totals
+
+Task: `#52` — Перейти на дневной учёт времени и единое управление таймером.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #52 — Start creates one active timer | Idle timer; activity ID `activity-1` | Run `flutter test test/daily_timer_controller_test.dart`; start twice for different IDs | Only the first activity is active and one running timestamp is stored | PASS — covered by focused run (10 tests) |
+| #52 — Pause and Resume preserve totals | Timer started at 23:55, paused at 00:05, resumed at 00:06, paused at 00:09 | Run `flutter test test/daily_timer_controller_test.dart` | Five minutes are stored on each day before midnight; the resumed three minutes add to day two; total is 13 minutes | PASS — covered by focused run (10 tests) |
+| #52 — Running state restores after restart | Timer starts at 10:00; app data persists | Relaunch app or restore controller from the repository at 10:07, then pause | Timer is still running and seven minutes are added from timestamps | PASS — covered by focused run (10 tests) |
+| #52 — Persistent storage restores timer state | A running timer and one saved daily total | Run `flutter test test/shared_preferences_daily_timer_repository_test.dart` | The active activity, timestamp, and day total are restored from local storage | PASS — covered by focused run (10 tests) |
+| #52 — Switch activities while timer runs | Two saved activities; first is selected | Start the timer, then select the second activity | Selection changes; the timer remains bound to the first activity and the second activity's timer button is disabled | PASS — covered by focused run (10 tests) |
+| #52 — Switch activities while timer is paused | First timer has accumulated two minutes | Pause, select the second activity, then return to the first | The second activity's timer button is disabled; the first activity still offers Resume and retains its two minutes | PASS — covered by focused run (10 tests) |
+| #52 — No session editor or running counter | Populated Activities | Inspect timer control before start, while running, and after pause | Start, Pause, and Resume are clearly announced; no digital elapsed counter or session save UI appears | PASS — widget test covered button states and no counter (focused run, 10 tests) |
+| #52 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All widget and repository tests pass | PASS — 40 tests |
+| #52 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+
+Daily totals are persisted by activity ID and local calendar day. The previous
+screen-local Practice prototype has been removed. The user runs checks and
+reports `OK` or `NOT OK`.
 
 ## First activity creation from Activities
 
