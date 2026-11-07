@@ -21,6 +21,16 @@ gold of the path.
 - Reserve Liquid Glass styling for a small number of prominent controls and
   navigation elements. Do not apply it as a decorative effect to every content
   surface; keep enough of the island artwork visible to preserve context.
+- The active timer geo widget is a native, compact Liquid Glass pin layered
+  above the current Activities screen. Show it only when the selected activity
+  differs from the one tracked by the running timer. Keep the activity icon
+  upright and the short “In progress” label readable; point the pin toward the
+  tracked activity's side relative to the current carousel selection. Tapping
+  it selects the tracked activity without stopping the timer. PNG mockups in
+  `docs/design/mockups/` are visual references only, not runtime assets. Draw
+  a near-circular pin with a short integrated point; mirror its direction
+  toward the tracked activity. Center the activity icon within the round body
+  and clip the glass backdrop blur to the pin silhouette.
 - Use the moss primary color and a circular shape for the prominent Activities
   timer control. The timer has only two states, `running` and `stopped`; keep
   the state and its Start or Stop action clear through its icon and accessible

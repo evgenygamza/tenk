@@ -30,3 +30,8 @@ background, so it tracks the visible path tip after screen cropping. Add a
 dedicated asset when introducing a milestone.
 The deprecated Practice timer prototype was removed when the shared timer was
 implemented for #52.
+
+Issue #71 adds a floating active-timer geo pin above Activities when the
+selected activity differs from the activity being tracked. Tapping it selects
+the tracked activity and leaves its timer running. The widget hides when the
+tracked activity is selected or the timer stops.
