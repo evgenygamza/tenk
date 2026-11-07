@@ -6,9 +6,9 @@ class ActivityLandmark extends StatelessWidget {
 
   static const landmarkKey = Key('activity_landmark');
   static const hundredHoursAsset =
-      'assets/images/landmark_100_hours_angled.png';
+      'lib/ui/graphics/landmark_100_hours_angled.png';
   static const tenThousandHoursAsset =
-      'assets/images/landmark_10000_hours_angled.png';
+      'lib/ui/graphics/landmark_10000_hours_angled.png';
 
   final int hours;
 

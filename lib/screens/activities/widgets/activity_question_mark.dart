@@ -4,7 +4,7 @@ class ActivityQuestionMark extends StatelessWidget {
   const ActivityQuestionMark({super.key});
 
   static const questionMarkKey = Key('activity_question_mark');
-  static const asset = 'assets/images/activity_question_mark_angled.png';
+  static const asset = 'lib/ui/graphics/activity_question_mark_angled.png';
 
   @override
   Widget build(BuildContext context) {

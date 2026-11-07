@@ -10,7 +10,7 @@ class ActivityIsland extends StatelessWidget {
     this.floatFactor = 0,
   });
 
-  static const backgroundAsset = 'assets/images/island_background.png';
+  static const backgroundAsset = 'lib/ui/graphics/island_background.png';
   static const artworkSize = Size(852, 1846);
   // Normalized coordinates of the path tip in the source island artwork.
   static const roadEndpointAnchor = Offset(0.539, 0.285);

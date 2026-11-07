@@ -4,16 +4,29 @@
 panels. Use it with the tokens in `lib/app/app_theme.dart` rather than creating
 one-off glass treatments.
 
-The populated activity view is rendered as the selected state of the Activities page; it is not a separate navigation destination. It shows the activity over the
-low-poly island background, with a goal monument, ETA, animated activity
-selector, and shared working add button. The selector shows the saved activity
-icons and changes the active activity. `ActivityIsland` uses the same clean island asset as Welcome
-and positions the selected activity icon and name in the header. It pins a separate
-`ActivityLandmark` at the summit in artwork coordinates. The 100-hour marker
-and 10,000-hour Greek temple are separate
-illustrated assets with their lettering included. The empty state uses a small
-floating question mark at the same summit anchor. Add a new designed asset for
-each additional milestone. ETA remains a visual placeholder.
+The populated activity view is rendered as the selected state of the Activities
+page; it is not a separate navigation destination. It shows a continuous
+low-poly panorama, ETA, animated activity selector, and shared working add
+button. A transparent horizontal PageView controls selection while one
+backdrop interpolates between the camera centers defined by
+`ActivityPanoramaLayout` in `activity_panorama_layout.dart`. The selector and
+swipe callback keep selection and persistence synchronized. Sea between the
+stopped frames appears during transitions.
+
+The unchanged user-provided artwork is
+`lib/ui/graphics/activities_panorama.png` (8400 × 2600 pixels). The layout uses
+a 1200 × 2600 pixel reference frame and source-image camera center x values
+`[900, 2570, 4200, 5910, 7665]`. Source-image trail endpoints are `(900, 900)`,
+`(2570, 920)`, `(4200, 800)`, `(5910, 920)`, and `(7665, 920)`. The image and
+overlays share one cover scale and camera offset. Each milestone's bottom
+center is placed at its endpoint, preserving alignment across viewport sizes
+and during swipes. Generated activity-specific finish content can be supplied
+through `activityFinishBuilder`; the current `100 hours` milestone mock is a
+separate overlay. The annotated anchor diagram at
+`docs/design/mockups/issue-81-panorama-anchors.png` is for review only and is
+not bundled as runtime artwork.
+Welcome and the empty Activities state continue to use `ActivityIsland` and its
+separate landmark assets. ETA remains a visual placeholder.
 The populated view includes a large round Start/Stop control bound to the
 shared daily timer from issue #52. The timer has only `running` and `stopped`
 states and persists its activity, running timestamp, and per-day totals. The

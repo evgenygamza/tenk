@@ -1,5 +1,24 @@
 # Backlog verification
 
+## Activities panorama carousel
+
+Task: `#81` — Добавить карусель активностей с панорамным фоном.
+
+Branch: `task/81-activities-carousel`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #81 — Swipe changes the selected activity and panorama together | Two saved activities; second is selected | Run `flutter test test/app_test.dart`; swipe between the two pages | Only saved activities are reachable; the name, selector, page, and persisted selected index stay synchronized | NOT RUN |
+| #81 — Selector opens its matching page | Two saved activities | Run `flutter test test/app_test.dart`; select each activity using its icon | The matching activity and panorama page are selected and saved | NOT RUN |
+| #81 — Create and delete preserve the page selection | Two saved activities; second is selected | Run `flutter test test/app_test.dart`; create an activity, delete another, then restart the app | The new activity uses the next page; deletion selects the correct remaining page; restart restores the same activity and page | NOT RUN |
+| #81 — Activity finish content uses its trail endpoint | A page with an activity-specific finish builder | Run `flutter test test/app_test.dart` | The activity-specific finish slot is separate from the background and its bottom center matches the measured source PNG endpoint after applying the same camera scale and offset | NOT RUN |
+| #81 — Camera passes through transition scenery | The supplied 8400×2600 PNG; reference frames are 1200×2600 | Run `flutter test test/activity_panorama_layout_test.dart test/app_test.dart`; compare the first frame, halfway through a swipe, and the second frame | The camera passes through the source area between stopped frames; image height and vertical position stay constant; milestones move with the artwork | NOT RUN |
+| #81 — Runtime graphics use the shared UI folder | Current task branch | Inspect `lib/ui/graphics/` and `pubspec.yaml`; open Welcome, empty Activities, and populated Activities | All runtime PNGs load from the shared folder; the supplied panorama remains unchanged; the review diagram is not bundled as runtime artwork | NOT RUN |
+| #81 — Five-activity limit | Five saved activities | Run `flutter test test/app_test.dart` | Five pages are available and the add button is hidden | NOT RUN |
+| #81 — Panorama placement on compact and standard screens | iOS simulator at 320×568 and a standard portrait size | Run `bash scripts/run-ios-simulator.sh`; swipe through available activities | Each centered peninsula stays separate; sea gutters appear between pages during transitions; paths and finish anchors align; tilt-shift remains visible; existing controls remain usable | NOT RUN |
+| #81 — Automated regression coverage | Current task branch | `flutter test test/activity_panorama_layout_test.dart test/app_test.dart test/home_practice_flow_test.dart test/welcome_screen_test.dart` | Camera geometry, carousel scenarios, and existing Activities/Welcome behavior pass | NOT RUN |
+| #81 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+
 ## MVP Activities timer button
 
 Task: `#69` — Добавить MVP-кнопку запуска и остановки таймера в Activities.
