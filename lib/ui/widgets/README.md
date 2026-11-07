@@ -19,5 +19,14 @@ shared daily timer from issue #52. The timer has only `running` and `stopped`
 states and persists its activity, running timestamp, and per-day totals. The
 dismissible first-practice tutorial remains available after activity creation.
 
+`ActiveTimerGeoWidget` floats above Activities while a different activity is
+selected from the one tracked by the shared timer. It uses the running
+activity's catalog icon, points toward that activity's side relative to the
+current carousel selection, and selects it when tapped without stopping the
+timer. It is hidden when the timer is stopped or the tracked activity is
+already selected. Welcome cannot have an active timer. PNGs in
+`docs/design/mockups/` record the approved left and right compositions; the app
+does not load those images.
+
 
 `PopulatedActivitiesView` contains the live filled state previously called Home. Keep page navigation and the empty state in `screens/activities`; add future embedded Activities controls here or under `screens/activities/widgets` as their ownership becomes clear.

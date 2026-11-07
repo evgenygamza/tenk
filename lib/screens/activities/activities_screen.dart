@@ -11,6 +11,7 @@ import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.d
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_question_mark.dart';
+import 'package:tenk/ui/widgets/active_timer_geo_widget.dart';
 import 'package:tenk/ui/widgets/populated_activities_view.dart';
 
 enum _ActivityMenuAction { edit, delete }
@@ -297,6 +298,17 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                 onSaved: _saveActivity,
               ),
             ],
+            if (isPopulated)
+              Positioned.fill(
+                child: ActiveTimerGeoWidget(
+                  activities: _activities,
+                  selectedIndex: _selectedIndex,
+                  timerController: _timerController,
+                  onTap: (activity) => _selectActivity(
+                    _activities.indexWhere((item) => item.id == activity.id),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

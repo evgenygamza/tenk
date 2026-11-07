@@ -42,6 +42,23 @@ superseded pause/resume behavior and do not verify this specification. The
 previous screen-local Practice prototype has been removed. The user runs checks
 and reports `OK` or `NOT OK`.
 
+## Active timer geo widget
+
+Task: `#71` — Добавить компактный виджет таймера на экран Activities.
+
+Branch: `task/71-compact-timer-widget`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #71 — Hidden on the tracked activity screen | Activities has saved activities; timer runs for the selected activity | `flutter test test/active_timer_geo_widget_test.dart` | No geo widget is rendered on the activity currently being tracked | NOT RUN |
+| #71 — Hidden when the timer stops | Timer runs for Music while English is selected | `flutter test test/active_timer_geo_widget_test.dart`; stop the timer | The geo widget disappears | NOT RUN |
+| #71 — Icon and side match the tracked activity | Two saved activities; timer runs for one while the other is selected | `flutter test test/active_timer_geo_widget_test.dart` | The tracked activity's icon appears in the native glass pin; its tip points left or right according to its position relative to the selected activity | NOT RUN |
+| #71 — Tapping pin returns to tracked activity | Timer runs for Music while English is selected | `flutter test test/active_timer_geo_widget_test.dart` and the integration scenario in `test/app_test.dart` | Music becomes selected, the widget disappears, and the same timer remains running | NOT RUN |
+| #71 — Widget remains above activity form | Timer runs for Music; English is selected; open the embedded activity form | `flutter test test/app_test.dart` and run the overlay scenario | The pin remains visible above the form; closing the form and tapping the pin selects Music without stopping the timer | NOT RUN |
+| #71 — Placement and Liquid Glass appearance | iOS simulator; timer runs for one of two or more activities | Run `bash scripts/run-ios-simulator.sh`; switch to another activity and back using the pin | Pin sits near the screen edge around one-third height, points toward the tracked activity, shows “In progress”, and does not use PNG assets or obscure navigation | NOT RUN |
+| #71 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All automated tests pass | NOT RUN |
+| #71 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+
 ## Activity editing and deletion
 
 Task: `#79` — Исправить редактирование и удаление активностей.

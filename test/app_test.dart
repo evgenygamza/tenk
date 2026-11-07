@@ -8,10 +8,13 @@ import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/app/app.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/domain/repositories/first_activity_repository.dart';
+import 'package:tenk/features/timer/domain/models/daily_timer_data.dart';
+import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
 import 'package:tenk/features/activities/presentation/create_activity_screen.dart';
 import 'package:tenk/ui/widgets/populated_activities_view.dart';
 import 'package:tenk/screens/welcome/welcome_screen.dart';
+import 'package:tenk/ui/widgets/active_timer_geo_widget.dart';
 
 class _Repository implements FirstActivityRepository {
   List<FirstActivity> activities = [];
@@ -46,6 +49,20 @@ class _Repository implements FirstActivityRepository {
   @override
   Future<void> saveSelectedActivityIndex(int index) async =>
       selectedIndex = index;
+}
+
+class _TimerRepository implements DailyTimerRepository {
+  DailyTimerData data;
+
+  _TimerRepository(this.data);
+
+  @override
+  Future<DailyTimerData> load() async => data;
+
+  @override
+  Future<void> save(DailyTimerData data) async {
+    this.data = data;
+  }
 }
 
 void main() {
@@ -200,6 +217,61 @@ void main() {
     expect(find.text('Пианино'), findsOneWidget);
     expect(repository.selectedIndex, 1);
   });
+
+  testWidgets(
+    'active timer widget stays above the form and returns to its activity',
+    (tester) async {
+      final repository = _Repository()
+        ..activities = [
+          const FirstActivity(id: 'activity-1', name: 'Music', iconId: 'music'),
+          const FirstActivity(
+            id: 'activity-2',
+            name: 'English',
+            iconId: 'running',
+          ),
+        ]
+        ..selectedIndex = 1;
+      final timerRepository = _TimerRepository(
+        DailyTimerData(
+          activeActivityId: 'activity-1',
+          runningSinceMilliseconds: DateTime(
+            2026,
+            11,
+            5,
+            10,
+          ).millisecondsSinceEpoch,
+        ),
+      );
+      await tester.pumpWidget(
+        App(
+          firstActivityRepository: repository,
+          dailyTimerRepository: timerRepository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WelcomeScreen), findsNothing);
+      expect(find.byKey(ActiveTimerGeoWidget.widgetKey), findsOneWidget);
+      expect(find.text('English'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(PopulatedActivitiesView.addActivityVisualKey),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(CreateActivityScreen), findsOneWidget);
+      expect(find.byKey(ActiveTimerGeoWidget.widgetKey), findsOneWidget);
+
+      await tester.tap(find.byKey(CreateActivityScreen.cancelButtonKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ActiveTimerGeoWidget.widgetKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Music'), findsOneWidget);
+      expect(find.byKey(ActiveTimerGeoWidget.widgetKey), findsNothing);
+      expect(find.byType(CreateActivityScreen), findsNothing);
+      expect(timerRepository.data.activeActivityId, 'activity-1');
+    },
+  );
 
   testWidgets('hides add control when five activities are saved', (
     tester,
