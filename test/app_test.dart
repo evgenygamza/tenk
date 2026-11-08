@@ -205,6 +205,26 @@ void main() {
 
     expect(repository.activities, hasLength(2));
     expect(find.text('Пианино'), findsOneWidget);
+
+    final panoramaRect = tester.getRect(
+      find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+    );
+    await tester.dragFrom(
+      Offset(panoramaRect.left + 50, panoramaRect.center.dy),
+      Offset(panoramaRect.width * 0.75, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Гитара'), findsOneWidget);
+    expect(repository.selectedIndex, 0);
+
+    await tester.dragFrom(
+      Offset(panoramaRect.right - 50, panoramaRect.center.dy),
+      Offset(-panoramaRect.width * 0.75, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Пианино'), findsOneWidget);
+    expect(repository.selectedIndex, 1);
+
     await tester.tap(find.byKey(const ValueKey('activities_selector_item_0')));
     await tester.pumpAndSettle();
     expect(find.text('Гитара'), findsOneWidget);
@@ -273,6 +293,117 @@ void main() {
     },
   );
 
+  testWidgets('activity finish content is built from its activity', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(393, 852);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    const activities = [
+      FirstActivity(id: 'guitar', name: 'Гитара', iconId: 'instrument'),
+      FirstActivity(id: 'music', name: 'Пианино', iconId: 'music'),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ActivitiesScreen(
+          activities: activities,
+          selectedIndex: 1,
+          activityFinishBuilder: (context, activity) => Text(
+            'Finish for ${activity.name}',
+            key: ValueKey('generated_activity_finish_${activity.id}'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Finish for Пианино'), findsOneWidget);
+    final finishRect = tester.getRect(
+      find.byKey(const ValueKey('generated_activity_finish_music')),
+    );
+    final finishSlotRect = tester.getRect(
+      find.byKey(const ValueKey('activities_finish_anchor_1')),
+    );
+    final viewportRect = tester.getRect(
+      find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+    );
+    expect(finishRect.center.dx, closeTo(finishSlotRect.center.dx, 1));
+    expect(finishRect.bottom, closeTo(finishSlotRect.bottom, 1));
+    expect(finishSlotRect.center.dx, closeTo(viewportRect.center.dx, 1));
+    expect(
+      finishSlotRect.bottom,
+      closeTo(viewportRect.top + viewportRect.height * 920 / 2600, 1),
+    );
+  });
+
+  testWidgets('panorama crosses the sea between activity frames', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(393, 852);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final repository = _Repository()
+      ..activities = [
+        const FirstActivity(name: 'Music', iconId: 'music'),
+        const FirstActivity(name: 'Reading', iconId: 'reading'),
+      ];
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+
+    final artwork = find.byKey(PopulatedActivitiesView.panoramaArtworkKey);
+    final viewport = tester.getRect(
+      find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+    );
+    final firstArtwork = tester.getRect(artwork);
+    final sourcePixelScale = firstArtwork.width / 8400;
+    expect(
+      firstArtwork.left + 900 * sourcePixelScale,
+      closeTo(viewport.center.dx, 1),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_1')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 180));
+
+    final middleArtwork = tester.getRect(artwork);
+    final middleCameraSourceX =
+        (viewport.center.dx - middleArtwork.left) / sourcePixelScale;
+    expect(middleCameraSourceX, allOf(greaterThan(1500), lessThan(1970)));
+    expect(middleArtwork.top, closeTo(firstArtwork.top, 0.01));
+    expect(middleArtwork.size, firstArtwork.size);
+    expect(
+      find.byKey(const ValueKey('activities_finish_anchor_0')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('activities_finish_anchor_1')),
+      findsNothing,
+    );
+
+    await tester.pumpAndSettle();
+    final secondArtwork = tester.getRect(artwork);
+    expect(
+      secondArtwork.left + 2570 * sourcePixelScale,
+      closeTo(viewport.center.dx, 1),
+    );
+    expect(firstArtwork.left - secondArtwork.left, greaterThan(viewport.width));
+    expect(secondArtwork.top, closeTo(firstArtwork.top, 0.01));
+    final secondFinish = tester.getRect(
+      find.byKey(const ValueKey('activities_finish_anchor_1')),
+    );
+    expect(secondFinish.center.dx, closeTo(viewport.center.dx, 1));
+    expect(
+      secondFinish.bottom,
+      closeTo(secondArtwork.top + 920 * sourcePixelScale, 1),
+    );
+    expect(repository.selectedIndex, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('hides add control when five activities are saved', (
     tester,
   ) async {
@@ -292,6 +423,27 @@ void main() {
       find.byKey(PopulatedActivitiesView.addActivityVisualKey),
       findsNothing,
     );
+
+    await tester.tap(find.byKey(const ValueKey('activities_selector_item_4')));
+    await tester.pumpAndSettle();
+    expect(repository.selectedIndex, 4);
+    final pageController = tester
+        .widget<PageView>(
+          find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+        )
+        .controller!;
+    expect(pageController.page, 4);
+
+    final panoramaRect = tester.getRect(
+      find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+    );
+    await tester.dragFrom(
+      Offset(panoramaRect.right - 50, panoramaRect.center.dy),
+      Offset(-panoramaRect.width * 0.75, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(repository.selectedIndex, 4);
+    expect(pageController.page, 4);
   });
 
   testWidgets('long press edits the selected activity in place', (
@@ -396,6 +548,12 @@ void main() {
     expect(repository.activities, [
       const FirstActivity(name: 'Пианино', iconId: 'music'),
     ]);
+    expect(repository.selectedIndex, 0);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(App(firstActivityRepository: repository));
+    await tester.pumpAndSettle();
+    expect(find.text('Пианино'), findsOneWidget);
     expect(repository.selectedIndex, 0);
 
     await tester.longPress(

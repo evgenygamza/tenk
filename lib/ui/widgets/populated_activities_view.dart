@@ -7,10 +7,13 @@ import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
 import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
-import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/screens/activities/widgets/activities_timer_button.dart';
+import 'package:tenk/ui/widgets/activity_panorama_layout.dart';
 import 'package:tenk/ui/widgets/translucent_panel.dart';
+
+typedef ActivityFinishBuilder =
+    Widget Function(BuildContext context, FirstActivity activity);
 
 class PopulatedActivitiesView extends StatefulWidget {
   const PopulatedActivitiesView({
@@ -23,6 +26,7 @@ class PopulatedActivitiesView extends StatefulWidget {
     this.onSelectActivity,
     this.onLongPressActivity,
     this.onAddActivity,
+    this.activityFinishBuilder,
     this.showAddActivity = true,
   });
 
@@ -35,8 +39,10 @@ class PopulatedActivitiesView extends StatefulWidget {
   static const activitySelectorKey = Key('activities_selector');
   static const addActivityVisualKey = Key('activities_add_visual');
   static const previewBackKey = Key('activities_preview_back');
+  static const panoramaPageViewKey = Key('activities_panorama_page_view');
 
-  static const backgroundAsset = ActivityIsland.backgroundAsset;
+  static const backgroundAsset = 'lib/ui/graphics/activities_panorama.png';
+  static const panoramaArtworkKey = Key('activities_panorama_artwork');
 
   final List<FirstActivity> activities;
   final DailyTimerController timerController;
@@ -46,6 +52,7 @@ class PopulatedActivitiesView extends StatefulWidget {
   final ValueChanged<int>? onSelectActivity;
   final void Function(BuildContext context, int index)? onLongPressActivity;
   final VoidCallback? onAddActivity;
+  final ActivityFinishBuilder? activityFinishBuilder;
   final bool showAddActivity;
 
   @override
@@ -55,19 +62,37 @@ class PopulatedActivitiesView extends StatefulWidget {
 
 class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   late bool _showTutorial;
+  late final PageController _pageController;
+  double _horizontalDragDelta = 0;
 
   @override
   void initState() {
     super.initState();
     _showTutorial = widget.showTutorial;
+    _pageController = PageController(initialPage: widget.selectedIndex);
   }
 
   @override
   void didUpdateWidget(covariant PopulatedActivitiesView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex &&
+        (_pageController.page?.round() ?? widget.selectedIndex) !=
+            widget.selectedIndex) {
+      _pageController.animateToPage(
+        widget.selectedIndex,
+        duration: const Duration(milliseconds: 360),
+        curve: Curves.easeInOutCubic,
+      );
+    }
     if (oldWidget.showTutorial != widget.showTutorial) {
       _showTutorial = widget.showTutorial;
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -80,201 +105,268 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
 
   Widget _buildView(BuildContext context) {
     final selectedActivity = widget.activities[widget.selectedIndex];
-    return Stack(
-      key: PopulatedActivitiesView.viewKey,
-      fit: StackFit.expand,
-      children: [
-        ActivityIsland(
-          key: PopulatedActivitiesView.goalKey,
-          summitContent: const ActivityLandmark(hours: 100),
-          summitSizeFactor: const Size(0.2, 0.105),
-          summitAnchor: ActivityIsland.roadEndpointAnchor,
-        ),
-        const DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x180B271B), Color(0x120B271B), Color(0x5C0B271B)],
-              stops: [0, 0.48, 1],
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) => _horizontalDragDelta = 0,
+      onHorizontalDragUpdate: (details) {
+        _horizontalDragDelta += details.delta.dx;
+      },
+      onHorizontalDragEnd: _handleHorizontalDragEnd,
+      child: Stack(
+        key: PopulatedActivitiesView.viewKey,
+        fit: StackFit.expand,
+        children: [
+          LayoutBuilder(
+            key: PopulatedActivitiesView.goalKey,
+            builder: (context, constraints) {
+              final viewport = constraints.biggest;
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (context, _) => _PanoramaBackdrop(
+                        layout: ActivityPanoramaLayout(
+                          viewport: viewport,
+                          page: _pageController.hasClients
+                              ? _pageController.page ??
+                                    widget.selectedIndex.toDouble()
+                              : widget.selectedIndex.toDouble(),
+                        ),
+                        activities: widget.activities,
+                        finishBuilder: widget.activityFinishBuilder,
+                      ),
+                    ),
+                  ),
+                  PageView.builder(
+                    key: PopulatedActivitiesView.panoramaPageViewKey,
+                    controller: _pageController,
+                    itemCount: widget.activities.length,
+                    onPageChanged: widget.onSelectActivity,
+                    itemBuilder: (context, index) => const SizedBox.expand(),
+                  ),
+                ],
+              );
+            },
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x180B271B),
+                  Color(0x120B271B),
+                  Color(0x5C0B271B),
+                ],
+                stops: [0, 0.48, 1],
+              ),
             ),
           ),
-        ),
-        SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxHeight < 700;
-              final horizontalPadding = constraints.maxWidth < 360
-                  ? 20.0
-                  : 28.0;
-              final verticalPadding = compact ? 8.0 : 10.0;
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxHeight < 700;
+                final horizontalPadding = constraints.maxWidth < 360
+                    ? 20.0
+                    : 28.0;
+                final verticalPadding = compact ? 8.0 : 10.0;
 
-              return SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  verticalPadding,
-                  horizontalPadding,
-                  verticalPadding,
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: (constraints.maxHeight - verticalPadding * 2)
-                        .clamp(0, double.infinity)
-                        .toDouble(),
+                return SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    verticalPadding,
+                    horizontalPadding,
+                    verticalPadding,
                   ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            if (widget.onPreviewBack != null)
-                              IconButton(
-                                key: PopulatedActivitiesView.previewBackKey,
-                                onPressed: widget.onPreviewBack,
-                                icon: const Icon(Icons.arrow_back),
-                                color: appInkColor,
-                                constraints: const BoxConstraints.tightFor(
-                                  width: 40,
-                                  height: 40,
-                                ),
-                                padding: EdgeInsets.zero,
-                              )
-                            else
-                              const SizedBox(width: 40, height: 40),
-                            Expanded(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 260),
-                                    transitionBuilder: (child, animation) =>
-                                        ScaleTransition(
-                                          scale: animation,
-                                          child: FadeTransition(
-                                            opacity: animation,
-                                            child: child,
-                                          ),
-                                        ),
-                                    child: Icon(
-                                      activityIconFor(
-                                        selectedActivity.iconId,
-                                      ).icon,
-                                      key: ValueKey(selectedActivity.iconId),
-                                      color: appInkColor,
-                                      size: 24,
-                                    ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: (constraints.maxHeight - verticalPadding * 2)
+                          .clamp(0, double.infinity)
+                          .toDouble(),
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              if (widget.onPreviewBack != null)
+                                IconButton(
+                                  key: PopulatedActivitiesView.previewBackKey,
+                                  onPressed: widget.onPreviewBack,
+                                  icon: const Icon(Icons.arrow_back),
+                                  color: appInkColor,
+                                  constraints: const BoxConstraints.tightFor(
+                                    width: 40,
+                                    height: 40,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: AnimatedSwitcher(
+                                  padding: EdgeInsets.zero,
+                                )
+                              else
+                                const SizedBox(width: 40, height: 40),
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AnimatedSwitcher(
                                       duration: const Duration(
                                         milliseconds: 260,
                                       ),
                                       transitionBuilder: (child, animation) =>
-                                          FadeTransition(
-                                            opacity: animation,
-                                            child: child,
+                                          ScaleTransition(
+                                            scale: animation,
+                                            child: FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            ),
                                           ),
-                                      child: Text(
-                                        selectedActivity.name,
-                                        key: ValueKey(selectedActivity.name),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: appInkColor,
-                                          fontSize: compact ? 23 : 27,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 1.4,
+                                      child: Icon(
+                                        activityIconFor(
+                                          selectedActivity.iconId,
+                                        ).icon,
+                                        key: ValueKey(selectedActivity.iconId),
+                                        color: appInkColor,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(
+                                          milliseconds: 260,
+                                        ),
+                                        transitionBuilder: (child, animation) =>
+                                            FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            ),
+                                        child: Text(
+                                          selectedActivity.name,
+                                          key: ValueKey(selectedActivity.name),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: appInkColor,
+                                            fontSize: compact ? 23 : 27,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.4,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 40, height: 40),
-                          ],
-                        ),
-                        SizedBox(height: compact ? 8 : 12),
-                        const Text(
-                          '18 days to your goal',
-                          key: PopulatedActivitiesView.etaKey,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            shadows: [
-                              Shadow(
-                                color: Color(0x66000000),
-                                blurRadius: 10,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: compact ? 2 : 4),
-                        const Spacer(flex: 2),
-                        ActivitiesTimerButton(
-                          timerController: widget.timerController,
-                          activityId: selectedActivity.id,
-                        ),
-                        SizedBox(height: compact ? 14 : 20),
-                        Text(
-                          'Every hour brings you closer\nto mastery.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: compact ? 25 : 30,
-                            fontWeight: FontWeight.w700,
-                            height: 1.12,
-                            letterSpacing: -0.3,
-                            shadows: const [
-                              Shadow(
-                                color: Color(0x88000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_showTutorial) ...[
-                          SizedBox(height: compact ? 12 : 18),
-                          _tutorialCard(context),
-                        ],
-                        SizedBox(height: compact ? 14 : 22),
-                        Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _ActivitySelector(
-                                activities: widget.activities,
-                                selectedIndex: widget.selectedIndex,
-                                onSelected: widget.onSelectActivity,
-                                onLongPressActivity: widget.onLongPressActivity,
-                              ),
-                              SizedBox(width: compact ? 10 : 14),
-                              if (widget.showAddActivity)
-                                ActivityAddButton(
-                                  key: PopulatedActivitiesView
-                                      .addActivityVisualKey,
-                                  compact: compact,
-                                  onPressed: widget.onAddActivity,
+                                  ],
                                 ),
+                              ),
+                              const SizedBox(width: 40, height: 40),
                             ],
                           ),
-                        ),
-                      ],
+                          SizedBox(height: compact ? 8 : 12),
+                          const Text(
+                            '18 days to your goal',
+                            key: PopulatedActivitiesView.etaKey,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x66000000),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: compact ? 2 : 4),
+                          const Spacer(flex: 2),
+                          ActivitiesTimerButton(
+                            timerController: widget.timerController,
+                            activityId: selectedActivity.id,
+                          ),
+                          SizedBox(height: compact ? 14 : 20),
+                          Text(
+                            'Every hour brings you closer\nto mastery.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: compact ? 25 : 30,
+                              fontWeight: FontWeight.w700,
+                              height: 1.12,
+                              letterSpacing: -0.3,
+                              shadows: const [
+                                Shadow(
+                                  color: Color(0x88000000),
+                                  blurRadius: 12,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_showTutorial) ...[
+                            SizedBox(height: compact ? 12 : 18),
+                            _tutorialCard(context),
+                          ],
+                          SizedBox(height: compact ? 14 : 22),
+                          Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _ActivitySelector(
+                                  activities: widget.activities,
+                                  selectedIndex: widget.selectedIndex,
+                                  onSelected: widget.onSelectActivity,
+                                  onLongPressActivity:
+                                      widget.onLongPressActivity,
+                                ),
+                                SizedBox(width: compact ? 10 : 14),
+                                if (widget.showAddActivity)
+                                  ActivityAddButton(
+                                    key: PopulatedActivitiesView
+                                        .addActivityVisualKey,
+                                    compact: compact,
+                                    onPressed: widget.onAddActivity,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  void _handleHorizontalDragEnd(DragEndDetails details) {
+    if (!_pageController.hasClients || widget.activities.length < 2) return;
+
+    final currentPage = _pageController.page?.round() ?? widget.selectedIndex;
+    final width = MediaQuery.sizeOf(context).width;
+    final velocity = details.primaryVelocity ?? 0;
+    final direction = _horizontalDragDelta.abs() >= width * 0.2
+        ? _horizontalDragDelta.sign
+        : velocity.abs() >= 500
+        ? velocity.sign
+        : 0;
+    if (direction == 0) return;
+
+    final nextPage = (currentPage + (direction < 0 ? 1 : -1))
+        .clamp(0, widget.activities.length - 1)
+        .toInt();
+    if (nextPage == currentPage) return;
+    _pageController.animateToPage(
+      nextPage,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeInOutCubic,
     );
   }
 
@@ -310,6 +402,58 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PanoramaBackdrop extends StatelessWidget {
+  const _PanoramaBackdrop({
+    required this.layout,
+    required this.activities,
+    required this.finishBuilder,
+  });
+
+  final ActivityPanoramaLayout layout;
+  final List<FirstActivity> activities;
+  final ActivityFinishBuilder? finishBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final decodeWidth =
+        (layout.renderedArtworkSize.width *
+                MediaQuery.devicePixelRatioOf(context))
+            .ceil()
+            .clamp(1, ActivityPanoramaLayout.artworkSize.width.toInt());
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        Positioned(
+          left: layout.artworkOffset.dx,
+          top: layout.artworkOffset.dy,
+          width: layout.renderedArtworkSize.width,
+          height: layout.renderedArtworkSize.height,
+          child: Image.asset(
+            PopulatedActivitiesView.backgroundAsset,
+            key: PopulatedActivitiesView.panoramaArtworkKey,
+            fit: BoxFit.fill,
+            cacheWidth: decodeWidth,
+          ),
+        ),
+        for (var index = 0; index < activities.length; index++)
+          if (layout.finishRect(index).overlaps(Offset.zero & layout.viewport))
+            Positioned.fromRect(
+              rect: layout.finishRect(index),
+              child: ExcludeSemantics(
+                excluding: index != layout.page.round(),
+                child: KeyedSubtree(
+                  key: ValueKey('activities_finish_anchor_$index'),
+                  child:
+                      finishBuilder?.call(context, activities[index]) ??
+                      const ActivityLandmark(hours: 100),
+                ),
+              ),
+            ),
+      ],
     );
   }
 }

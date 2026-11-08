@@ -5,7 +5,6 @@ import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.da
 import 'package:tenk/features/timer/domain/models/daily_timer_data.dart';
 import 'package:tenk/features/timer/domain/repositories/daily_timer_repository.dart';
 import 'package:tenk/screens/activities/activities_screen.dart';
-import 'package:tenk/screens/activities/widgets/activity_island.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/ui/widgets/populated_activities_view.dart';
 
@@ -247,6 +246,10 @@ void main() {
         find.byKey(const ValueKey('activities_selector_item_0')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('activities_finish_anchor_0')),
+        findsOneWidget,
+      );
       expect(find.byKey(ActivityLandmark.landmarkKey), findsOneWidget);
       expect(
         find.byKey(PopulatedActivitiesView.activitySelectorKey),
@@ -304,26 +307,12 @@ void main() {
       final islandSize = tester.getSize(
         find.byKey(PopulatedActivitiesView.goalKey),
       );
-      final fitted = applyBoxFit(
-        BoxFit.cover,
-        ActivityIsland.artworkSize,
-        islandSize,
+      final finishSlotRect = tester.getRect(
+        find.byKey(const ValueKey('activities_finish_anchor_0')),
       );
-      final imageOffset = Offset(
-        (islandSize.width - fitted.destination.width) / 2,
-        (islandSize.height - fitted.destination.height) / 2,
-      );
-      final roadTip =
-          imageOffset +
-          Offset(
-            fitted.destination.width * ActivityIsland.roadEndpointAnchor.dx,
-            fitted.destination.height * ActivityIsland.roadEndpointAnchor.dy,
-          );
-      final landmarkRect = tester.getRect(
-        find.byKey(ActivityLandmark.landmarkKey),
-      );
-      expect(landmarkRect.center.dx, closeTo(roadTip.dx, 1));
-      expect(landmarkRect.bottom, closeTo(roadTip.dy, 1));
+      expect(islandSize, const Size(320, 568));
+      expect(finishSlotRect.center.dx, closeTo(160, 1));
+      expect(finishSlotRect.bottom, closeTo(177.3333, 1));
       await tester.ensureVisible(
         find.byKey(PopulatedActivitiesView.addActivityVisualKey),
       );

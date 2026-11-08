@@ -25,6 +25,7 @@ class ActivitiesScreen extends StatefulWidget {
     this.activityIconId = 'instrument',
     this.repository,
     this.timerController,
+    this.activityFinishBuilder,
     this.showTutorial = false,
   });
 
@@ -34,7 +35,7 @@ class ActivitiesScreen extends StatefulWidget {
   static const addButtonKey = Key('activities_add_button');
   static const createOverlayKey = Key('activities_create_overlay');
   static const deleteConfirmButtonKey = Key('activity_delete_confirm');
-  static const backgroundAsset = ActivityIsland.backgroundAsset;
+  static const backgroundAsset = PopulatedActivitiesView.backgroundAsset;
   static const maxActivities = 5;
 
   final List<FirstActivity> activities;
@@ -45,6 +46,7 @@ class ActivitiesScreen extends StatefulWidget {
   final String activityIconId;
   final FirstActivityRepository? repository;
   final DailyTimerController? timerController;
+  final ActivityFinishBuilder? activityFinishBuilder;
   final bool showTutorial;
 
   @override
@@ -276,6 +278,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                 selectedIndex: _selectedIndex,
                 showTutorial: widget.showTutorial || _showTutorial,
                 timerController: _timerController,
+                activityFinishBuilder: widget.activityFinishBuilder,
                 onSelectActivity: _selectActivity,
                 onLongPressActivity: _showActivityMenu,
                 onAddActivity: _canAddActivity ? _openCreation : null,
