@@ -1,75 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
 import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
+import 'package:tenk/ui/widgets/session_timer_widget.dart';
 
+/// Connects the visual control to the shared timer and persistence errors.
 class ActivitiesTimerButton extends StatelessWidget {
   const ActivitiesTimerButton({
     super.key,
     required this.timerController,
     required this.activityId,
+    this.weeklyProgress = 0,
+    this.diameter = appTimerRunningDiameter,
+    this.reduceTransparency = false,
   });
 
   static const toggleButtonKey = Key('activities_start_session');
 
   final DailyTimerController timerController;
   final String activityId;
+  final double weeklyProgress;
+  final double diameter;
+  final bool reduceTransparency;
 
   @override
   Widget build(BuildContext context) {
-    final status = timerController.status;
-    final isForActiveActivity =
-        timerController.activeActivityId == null ||
-        timerController.activeActivityId == activityId;
-    final actionLabel = !isForActiveActivity
+    final otherActivity =
+        timerController.activeActivityId != null &&
+        timerController.activeActivityId != activityId;
+    final running =
+        !otherActivity && timerController.status == DailyTimerStatus.running;
+    final actionLabel = otherActivity
         ? 'Timer is active for another activity'
-        : switch (status) {
-            DailyTimerStatus.stopped => 'Start timer',
-            DailyTimerStatus.running => 'Stop timer',
-          };
-    final icon = !isForActiveActivity
-        ? Icons.play_arrow_rounded
-        : switch (status) {
-            DailyTimerStatus.stopped => Icons.play_arrow_rounded,
-            DailyTimerStatus.running => Icons.pause_rounded,
-          };
+        : running
+        ? 'Stop timer'
+        : 'Start timer';
+    return SessionTimerWidget(
+      running: running,
+      dailyElapsed: timerController.totalForToday(activityId),
+      weeklyProgress: weeklyProgress,
+      actionLabel: actionLabel,
+      buttonKey: toggleButtonKey,
+      diameter: diameter,
+      reduceTransparency: reduceTransparency,
+      onPressed: otherActivity || timerController.isSaving
+          ? null
+          : () => _toggle(context, running),
+    );
+  }
 
-    return Tooltip(
-      message: actionLabel,
-      child: Semantics(
-        label: actionLabel,
-        button: true,
-        enabled: isForActiveActivity,
-        child: SizedBox(
-          width: 112,
-          height: 112,
-          child: FilledButton(
-            key: ActivitiesTimerButton.toggleButtonKey,
-            onPressed: isForActiveActivity
-                ? () {
-                    switch (status) {
-                      case DailyTimerStatus.stopped:
-                        timerController.start(activityId);
-                        break;
-                      case DailyTimerStatus.running:
-                        timerController.stop();
-                        break;
-                    }
-                  }
-                : null,
-            style: FilledButton.styleFrom(
-              backgroundColor: appMossColor,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.zero,
-              shape: const CircleBorder(),
-              elevation: 8,
-            ),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Icon(icon, key: ValueKey(status), size: 52),
-            ),
+  Future<void> _toggle(BuildContext context, bool running) async {
+    try {
+      if (running) {
+        await timerController.stop();
+      } else {
+        await timerController.start(activityId);
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            running
+                ? 'Could not save practice. Timer is still running. Try Stop again.'
+                : 'Could not start timer. Please try again.',
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 }

@@ -28,6 +28,20 @@ void main() {
     expect(await repository.loadSelectedActivityIndex(), 0);
   });
 
+  test('round trips previously accumulated minutes', () async {
+    final repository = SharedPreferencesFirstActivityRepository();
+    const activity = FirstActivity(
+      name: 'Гитара',
+      iconId: 'instrument',
+      id: 'guitar',
+      initialMinutes: 125,
+    );
+
+    await repository.saveActivities([activity]);
+
+    expect(await repository.loadActivities(), [activity]);
+  });
+
   test(
     'loads a legacy single activity and supplies its default icon',
     () async {

@@ -327,7 +327,7 @@ void main() {
       find.byKey(const ValueKey('activities_finish_anchor_1')),
     );
     final viewportRect = tester.getRect(
-      find.byKey(PopulatedActivitiesView.panoramaPageViewKey),
+      find.byKey(PopulatedActivitiesView.goalKey),
     );
     expect(finishRect.center.dx, closeTo(finishSlotRect.center.dx, 1));
     expect(finishRect.bottom, closeTo(finishSlotRect.bottom, 1));

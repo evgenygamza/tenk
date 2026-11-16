@@ -32,6 +32,8 @@ class SharedPreferencesFirstActivityRepository
               name: activity['name'] as String,
               iconId: activity['iconId'] as String,
               id: activity['id'] as String? ?? 'legacy-$index',
+              initialMinutes:
+                  (activity['initialMinutes'] as num?)?.toInt() ?? 0,
             );
           })
           .toList(growable: false);
@@ -87,6 +89,7 @@ class SharedPreferencesFirstActivityRepository
               'id': activity.id,
               'name': activity.name,
               'iconId': activity.iconId,
+              'initialMinutes': activity.initialMinutes,
             },
           )
           .toList(growable: false),

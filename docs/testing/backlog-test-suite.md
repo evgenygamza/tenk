@@ -61,6 +61,42 @@ superseded pause/resume behavior and do not verify this specification. The
 previous screen-local Practice prototype has been removed. The user runs checks
 and reports `OK` or `NOT OK`.
 
+## Activity goal progress
+
+Task: `#61` — Перенести прогресс и расчёт ближайшей цели.
+
+Branch: `task/61-goal-progress`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #61 — Goal steps and progress | Activity total at, below, and between goal steps | `flutter test test/activity_goal_progress_test.dart` | Uses steps 10, 50, 100, 250, 500, 1,000, then every 1,000 through 10,000 hours; progress is measured from the previous step to the next | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Imported time and saved practice | Fixture: 5 imported hours plus 45 minutes on each of the last 30 local days | `flutter test test/shared_preferences_first_activity_repository_test.dart test/home_practice_flow_test.dart` | Imported minutes persist with the activity; Activities shows Total · 27h 30m, This week · 2h 15m / 3h, and a 30 days estimate; milestone progress remains covered at model level | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Recent pace and hidden estimate | Timer has daily totals within and outside the last 30 local days; one activity has only four days of recorded history; one has imported time only | `flutter test test/daily_timer_controller_test.dart test/activity_goal_progress_test.dart test/home_practice_flow_test.dart` | Use the last 30 local days for established activities and the shorter observed history for newer ones; include a running interval, exclude older and other-activity time, and hide ETA without recorded pace | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Current-week practice summary | Selected activity has totals before Monday, during this week, and a running interval today | `flutter test test/daily_timer_controller_test.dart test/home_practice_flow_test.dart` | Show only the selected activity's Monday-through-today timer total; include the running interval and exclude imported time and other activities | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Regression coverage | Current task branch | `flutter test --reporter expanded` | Existing activity, timer, and panorama flows continue to work | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Static analysis | Current task branch | `flutter analyze` | No issues found | PASS — agent-run at owner request, 2026-11-16 |
+
+## Session timer widget — follow-up to #61
+
+Branch: `task/61-goal-progress`. Design: `docs/design/session-timer-widget/SPEC.md`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #61 — Weekly ring and lifetime metrics | 65h imported; empty week, 140m this week, then 4h this week; other-activity and Sunday totals | `flutter test test/session_timer_widget_test.dart` | Ring is 0%, 77.8%, then 100%; imported time does not fill it; actual weekly/lifetime totals continue past the target | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Daily counter and restart | Saved practice today/yesterday, running, stopped, restarted, restored, and clock rollback | `flutter test test/daily_timer_controller_test.dart test/session_timer_widget_test.dart` | Today’s counter includes saved and running milliseconds; pause time is excluded; restart/restoration retain today’s seconds; local midnight resets the daily display; negative running elapsed clamps to zero | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Save failure and duplicate taps | Repository delays/fails writes | `flutter test test/daily_timer_controller_test.dart test/session_timer_widget_test.dart` | Pending actions disabled; failure preserves prior state and shows retry guidance; retry does not duplicate practice | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Week boundary | Start Sunday 23:50; stop Monday 00:10 | `flutter test test/daily_timer_controller_test.dart` | Lifetime time is 20m; today and current week are 10m, before and after stop | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Lifecycle and geometry | Running selected activity, stopped state, background/resume, text scale 2 | `flutter test test/session_timer_widget_test.dart test/home_practice_flow_test.dart` | 140/280 circles occupy their actual height with 8–12px gaps; timestamp catches up on resume; iOS reduced-transparency preference is reloaded through a mocked platform channel; enlarged text fits; selector and disabled other-activity action remain available | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Timer belongs to its activity page | Two activities with different daily/weekly totals; Guitar running | `flutter test test/home_practice_flow_test.dart` | During a swipe, Guitar’s timer moves with its page; Piano shows its own values and a disabled Start; returning restores Guitar’s accumulated today value | PASS — agent-run at owner request, 2026-11-16 |
+| #61 — Live appearance | Actual panorama; regular/compact screen; accessibility settings | Compare stopped/running states with design PNGs; start, stop, restart, switch activity and use the pin | Glass/ring legible, no overlaps, text follows expansion, timer slides with its page, daily/weekly metrics update; check contrast and motion manually | NOT RUN |
+
+
+Verification run at the owner’s request on 2026-11-16: full suite **79 passed**,
+`flutter analyze --no-pub` reported **no issues**, and
+`flutter build ios --simulator --debug --no-codesign` **passed**.
+The running simulator was hot reloaded and activity selection / compact stopped
+spacing inspected; the full manual visual/accessibility checklist remains NOT RUN.
+
 ## Active timer geo widget
 
 Task: `#71` — Добавить компактный виджет таймера на экран Activities.
