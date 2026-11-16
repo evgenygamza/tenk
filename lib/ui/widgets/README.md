@@ -6,9 +6,11 @@ one-off glass treatments.
 
 The populated activity view is rendered as the selected state of the Activities
 page; it is not a separate navigation destination. It shows a continuous
-low-poly panorama, ETA, animated activity selector, and shared working add
-button. A transparent horizontal PageView controls selection while one
-backdrop interpolates between the camera centers defined by
+low-poly panorama, weekly practice ring, current-week and lifetime time, ETA,
+animated activity selector, and shared working add button. The horizontal
+PageView carries each activity’s header, timer, estimate, and metrics; these
+slide with their activity while the selector remains fixed. One backdrop
+interpolates between the camera centers defined by
 `ActivityPanoramaLayout` in `activity_panorama_layout.dart`. The selector and
 swipe callback keep selection and persistence synchronized. Sea between the
 stopped frames appears during transitions.
@@ -26,11 +28,23 @@ separate overlay. The annotated anchor diagram at
 `docs/design/mockups/issue-81-panorama-anchors.png` is for review only and is
 not bundled as runtime artwork.
 Welcome and the empty Activities state continue to use `ActivityIsland` and its
-separate landmark assets. ETA remains a visual placeholder.
-The populated view includes a large round Start/Stop control bound to the
+separate landmark assets. The weekly summary uses only timer totals from Monday
+through today for the selected activity. ETA uses up to 30 calendar days of
+recorded practice, or the shorter observed history for newer activities.
+`SessionTimerWidget` draws the circular glass Start/Stop control and weekly
+ring. It switches between 140 and 280 logical pixel diameters (adapted for
+compact screens), occupying the actual animated height with 8–12px text gaps. iOS Reduce
+Transparency is read on opening/resume via `tenk/accessibility`; high contrast
+also uses an opaque center. The running
+center shows today’s saved practice plus the current day’s running interval,
+with the label `Today`. Pausing and restarting retain today’s seconds; only
+a new local calendar day resets the displayed counter.
+`ActivitiesSessionTimer` supplies live values and a foreground-only second
+ticker; `ActivitiesTimerButton` connects actions and persistence errors to the
 shared daily timer from issue #52. The timer has only `running` and `stopped`
-states and persists its activity, running timestamp, and per-day totals. The
-dismissible first-practice tutorial remains available after activity creation.
+states and persists its activity, running timestamp, and per-day totals.
+The weekly target has one definition in `features/timer/domain/models/practice_targets.dart`.
+The dismissible first-practice tutorial remains available after activity creation.
 
 `ActiveTimerGeoWidget` floats above Activities while a different activity is
 selected from the one tracked by the shared timer. It uses the running

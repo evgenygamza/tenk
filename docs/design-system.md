@@ -31,8 +31,15 @@ gold of the path.
   a near-circular pin with a short integrated point; mirror its direction
   toward the tracked activity. Center the activity icon within the round body
   and clip the glass backdrop blur to the pin silhouette.
-- Use the moss primary color and a circular shape for the prominent Activities
-  timer control. The timer has only two states, `running` and `stopped`; keep
+- Use the session timer geometry in `docs/design/session-timer-widget/SPEC.md`
+  for the prominent Activities control: clipped circular glass, weekly progress
+  ring, horizontal centering, and a stopped diameter half the running diameter.
+  Use its actual animated height and 8–12px gaps to nearby text; let the
+  caption move when the control expands. Place each activity’s control and
+  metrics inside its swipeable page. Show today’s accumulated practice while
+  running, retaining seconds across pause/restart and resetting at local midnight. Keep
+  the shared material and motion tokens in `lib/app/app_theme.dart`. The timer
+  has only two states, `running` and `stopped`; keep
   the state and its Start or Stop action clear through its icon and accessible
   label. Show Play when stopped or disabled for another activity, and Pause
   while controlling a running timer; its action and accessible label remain
@@ -42,6 +49,13 @@ gold of the path.
   broad icon catalog searchable and filterable by category.
 - Give milestone artwork a soft, centered ground shadow at its base when it is
   layered over the island landscape.
+- On the populated Activities panorama, show the milestone estimate above the
+  timer and two centered white metric lines below: `This week · … / 3h` and
+  `Total · …`. The ring represents selected-activity weekly practice, capped
+  at the target; imported time contributes only to lifetime totals and goals.
+  Keep text legible with a restrained shadow. Reserve the estimate slot even
+  when pace is unavailable. Respect reduced motion and high contrast; allow
+  enlarged text and compact layouts to scroll without overlapping controls.
 - Style contextual popup menus with the shared translucent surface, rounded
   border, subtle shadow, and theme foreground colors.
 

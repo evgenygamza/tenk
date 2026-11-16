@@ -82,6 +82,7 @@ class _CreateActivityScreenState extends State<CreateActivityScreen> {
           'activity-${DateTime.now().microsecondsSinceEpoch}',
       name: name,
       iconId: _iconId,
+      initialMinutes: widget.initialActivity?.initialMinutes ?? 0,
     );
     try {
       await widget.onSaved(activity);

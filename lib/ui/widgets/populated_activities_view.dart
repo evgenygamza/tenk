@@ -9,6 +9,7 @@ import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.da
 import 'package:tenk/screens/activities/widgets/activity_add_button.dart';
 import 'package:tenk/screens/activities/widgets/activity_landmark.dart';
 import 'package:tenk/screens/activities/widgets/activities_timer_button.dart';
+import 'package:tenk/screens/activities/widgets/activities_session_timer.dart';
 import 'package:tenk/ui/widgets/activity_panorama_layout.dart';
 import 'package:tenk/ui/widgets/translucent_panel.dart';
 
@@ -35,7 +36,8 @@ class PopulatedActivitiesView extends StatefulWidget {
   static const dismissTutorialKey = Key('activities_dismiss_tutorial');
   static const startSessionKey = ActivitiesTimerButton.toggleButtonKey;
   static const goalKey = Key('activities_goal');
-  static const etaKey = Key('activities_goal_eta');
+  static const etaKey = ActivitiesSessionTimer.estimateKey;
+  static const weeklyPracticeKey = ActivitiesSessionTimer.weeklyPracticeKey;
   static const activitySelectorKey = Key('activities_selector');
   static const addActivityVisualKey = Key('activities_add_visual');
   static const previewBackKey = Key('activities_preview_back');
@@ -104,7 +106,6 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
   }
 
   Widget _buildView(BuildContext context) {
-    final selectedActivity = widget.activities[widget.selectedIndex];
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragStart: (_) => _horizontalDragDelta = 0,
@@ -118,49 +119,36 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
         children: [
           LayoutBuilder(
             key: PopulatedActivitiesView.goalKey,
-            builder: (context, constraints) {
-              final viewport = constraints.biggest;
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, _) => _PanoramaBackdrop(
-                        layout: ActivityPanoramaLayout(
-                          viewport: viewport,
-                          page: _pageController.hasClients
-                              ? _pageController.page ??
-                                    widget.selectedIndex.toDouble()
-                              : widget.selectedIndex.toDouble(),
-                        ),
-                        activities: widget.activities,
-                        finishBuilder: widget.activityFinishBuilder,
-                      ),
-                    ),
+            builder: (context, constraints) => IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, _) => _PanoramaBackdrop(
+                  layout: ActivityPanoramaLayout(
+                    viewport: constraints.biggest,
+                    page: _pageController.hasClients
+                        ? _pageController.page ??
+                              widget.selectedIndex.toDouble()
+                        : widget.selectedIndex.toDouble(),
                   ),
-                  PageView.builder(
-                    key: PopulatedActivitiesView.panoramaPageViewKey,
-                    controller: _pageController,
-                    itemCount: widget.activities.length,
-                    onPageChanged: widget.onSelectActivity,
-                    itemBuilder: (context, index) => const SizedBox.expand(),
-                  ),
-                ],
-              );
-            },
+                  activities: widget.activities,
+                  finishBuilder: widget.activityFinishBuilder,
+                ),
+              ),
+            ),
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x180B271B),
-                  Color(0x120B271B),
-                  Color(0x5C0B271B),
-                ],
-                stops: [0, 0.48, 1],
+          const IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x180B271B),
+                    Color(0x120B271B),
+                    Color(0x5C0B271B),
+                  ],
+                  stops: [0, 0.48, 1],
+                ),
               ),
             ),
           ),
@@ -168,180 +156,184 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxHeight < 700;
-                final horizontalPadding = constraints.maxWidth < 360
-                    ? 20.0
-                    : 28.0;
-                final verticalPadding = compact ? 8.0 : 10.0;
-
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    verticalPadding,
-                    horizontalPadding,
-                    verticalPadding,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: (constraints.maxHeight - verticalPadding * 2)
-                          .clamp(0, double.infinity)
-                          .toDouble(),
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            children: [
-                              if (widget.onPreviewBack != null)
-                                IconButton(
-                                  key: PopulatedActivitiesView.previewBackKey,
-                                  onPressed: widget.onPreviewBack,
-                                  icon: const Icon(Icons.arrow_back),
-                                  color: appInkColor,
-                                  constraints: const BoxConstraints.tightFor(
-                                    width: 40,
-                                    height: 40,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                )
-                              else
-                                const SizedBox(width: 40, height: 40),
-                              Expanded(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 260,
-                                      ),
-                                      transitionBuilder: (child, animation) =>
-                                          ScaleTransition(
-                                            scale: animation,
-                                            child: FadeTransition(
-                                              opacity: animation,
-                                              child: child,
-                                            ),
-                                          ),
-                                      child: Icon(
-                                        activityIconFor(
-                                          selectedActivity.iconId,
-                                        ).icon,
-                                        key: ValueKey(selectedActivity.iconId),
-                                        color: appInkColor,
-                                        size: 24,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: AnimatedSwitcher(
-                                        duration: const Duration(
-                                          milliseconds: 260,
-                                        ),
-                                        transitionBuilder: (child, animation) =>
-                                            FadeTransition(
-                                              opacity: animation,
-                                              child: child,
-                                            ),
-                                        child: Text(
-                                          selectedActivity.name,
-                                          key: ValueKey(selectedActivity.name),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: appInkColor,
-                                            fontSize: compact ? 23 : 27,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 1.4,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 40, height: 40),
-                            ],
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, pageConstraints) => PageView.builder(
+                          key: PopulatedActivitiesView.panoramaPageViewKey,
+                          controller: _pageController,
+                          itemCount: widget.activities.length,
+                          onPageChanged: widget.onSelectActivity,
+                          itemBuilder: (context, index) => _buildActivityPage(
+                            context,
+                            index,
+                            pageConstraints,
+                            compact,
                           ),
-                          SizedBox(height: compact ? 8 : 12),
-                          const Text(
-                            '18 days to your goal',
-                            key: PopulatedActivitiesView.etaKey,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0x66000000),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: compact ? 2 : 4),
-                          const Spacer(flex: 2),
-                          ActivitiesTimerButton(
-                            timerController: widget.timerController,
-                            activityId: selectedActivity.id,
-                          ),
-                          SizedBox(height: compact ? 14 : 20),
-                          Text(
-                            'Every hour brings you closer\nto mastery.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: compact ? 25 : 30,
-                              fontWeight: FontWeight.w700,
-                              height: 1.12,
-                              letterSpacing: -0.3,
-                              shadows: const [
-                                Shadow(
-                                  color: Color(0x88000000),
-                                  blurRadius: 12,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (_showTutorial) ...[
-                            SizedBox(height: compact ? 12 : 18),
-                            _tutorialCard(context),
-                          ],
-                          SizedBox(height: compact ? 14 : 22),
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _ActivitySelector(
-                                  activities: widget.activities,
-                                  selectedIndex: widget.selectedIndex,
-                                  onSelected: widget.onSelectActivity,
-                                  onLongPressActivity:
-                                      widget.onLongPressActivity,
-                                ),
-                                SizedBox(width: compact ? 10 : 14),
-                                if (widget.showAddActivity)
-                                  ActivityAddButton(
-                                    key: PopulatedActivitiesView
-                                        .addActivityVisualKey,
-                                    compact: compact,
-                                    onPressed: widget.onAddActivity,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        compact ? 8 : 12,
+                        20,
+                        compact ? 8 : 10,
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _ActivitySelector(
+                              activities: widget.activities,
+                              selectedIndex: widget.selectedIndex,
+                              onSelected: widget.onSelectActivity,
+                              onLongPressActivity: widget.onLongPressActivity,
+                            ),
+                            SizedBox(width: compact ? 10 : 14),
+                            if (widget.showAddActivity)
+                              ActivityAddButton(
+                                key: PopulatedActivitiesView
+                                    .addActivityVisualKey,
+                                compact: compact,
+                                onPressed: widget.onAddActivity,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActivityPage(
+    BuildContext context,
+    int index,
+    BoxConstraints constraints,
+    bool compact,
+  ) {
+    final activity = widget.activities[index];
+    final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 28.0;
+    final verticalPadding = compact ? 8.0 : 10.0;
+    return ExcludeSemantics(
+      excluding: index != widget.selectedIndex,
+      child: SingleChildScrollView(
+        key: ValueKey('activities_page_${activity.id}'),
+        primary: false,
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: (constraints.maxHeight - verticalPadding * 2)
+                .clamp(0.0, double.infinity)
+                .toDouble(),
+          ),
+          child: IntrinsicHeight(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    if (widget.onPreviewBack != null)
+                      IconButton(
+                        key: PopulatedActivitiesView.previewBackKey,
+                        onPressed: widget.onPreviewBack,
+                        icon: const Icon(Icons.arrow_back),
+                        color: appInkColor,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 40,
+                          height: 40,
+                        ),
+                        padding: EdgeInsets.zero,
+                      )
+                    else
+                      const SizedBox(width: 40, height: 40),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 260),
+                            transitionBuilder: (child, animation) =>
+                                ScaleTransition(
+                                  scale: animation,
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                                ),
+                            child: Icon(
+                              activityIconFor(activity.iconId).icon,
+                              key: ValueKey(activity.iconId),
+                              color: appInkColor,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 260),
+                              transitionBuilder: (child, animation) =>
+                                  FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                              child: Text(
+                                activity.name,
+                                key: ValueKey(activity.name),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: appInkColor,
+                                  fontSize: compact ? 23 : 27,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 40, height: 40),
+                  ],
+                ),
+
+                const Spacer(flex: 2),
+                ActivitiesSessionTimer(
+                  key: ValueKey('activities_timer_${activity.id}'),
+                  activity: activity,
+                  timerController: widget.timerController,
+                  isVisible: index == widget.selectedIndex,
+                  diameter: math.min(
+                    appTimerRunningDiameter,
+                    math.min(
+                      constraints.maxWidth - horizontalPadding * 2,
+                      (constraints.maxHeight - 220)
+                          .clamp(240.0, appTimerRunningDiameter)
+                          .toDouble(),
+                    ),
+                  ),
+                ),
+                if (_showTutorial && index == widget.selectedIndex) ...[
+                  SizedBox(height: compact ? 12 : 18),
+                  _tutorialCard(context),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

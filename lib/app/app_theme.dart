@@ -16,6 +16,19 @@ const appDestructiveActionColor = Color(0xFF98584D);
 const appPanelRadius = 28.0;
 const appContextMenuRadius = 18.0;
 const appPanelBlurSigma = 16.0;
+const appTimerProgressColor = Color(0xFF227D36);
+const appTimerTrackColor = Color(0x61FFFFFF);
+const appTimerRimColor = Color(0xB3FFFFFF);
+const appTimerShadowColor = Color(0x24000000);
+const appTimerTextShadowColor = Color(0x59000000);
+const appTimerTintOpacity = 0.28;
+const appTimerBlurSigma = 14.0;
+const appTimerRunningDiameter = 280.0;
+const appTimerContentGap = 12.0;
+const appTimerCompactContentGap = 8.0;
+const appTimerSizeDuration = Duration(milliseconds: 320);
+const appTimerContentDuration = Duration(milliseconds: 160);
+const appTimerProgressDuration = Duration(milliseconds: 250);
 
 ThemeData buildAppTheme() {
   final colorScheme =
