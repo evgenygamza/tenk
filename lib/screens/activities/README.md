@@ -25,9 +25,11 @@ owns the camera positions and trail endpoints in source-image pixels. The
 image and milestone overlays use the same cover scale and camera offset, so
 the bottom center of each milestone stays attached to its endpoint while
 swiping or resizing. An optional `activityFinishBuilder` supplies
-activity-specific content separately from the background. The current finish
-is a `100 hours` milestone mock on every trail; the builder can replace it
-with generated milestone artwork when the flow from epic #39 is ready.
+activity-specific content separately from the background. Its `ActivityLandmark`
+uses the nearest goal from `ActivityGoalProgress` to select a dedicated
+milestone overlay for each supported step from 10 to 10,000 hours. The overlays
+sit above the shared island or panorama art and do not contain duplicate
+backgrounds.
 
 The large round control manages the app-wide timer,
 which has only two states: `running` and `stopped`. Start begins tracking the
