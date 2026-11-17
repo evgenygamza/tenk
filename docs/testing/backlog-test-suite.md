@@ -1,5 +1,19 @@
 # Backlog verification
 
+## Goal milestone landmarks
+
+Task: `#62` — Подготовить отдельные landmark-иллюстрации для ступеней целей.
+
+Branch: `feat/62-landmark-illustrations`.
+
+| Scenario / acceptance criterion | Preconditions and test data | Steps / command | Expected result | Actual result |
+| --- | --- | --- | --- | --- |
+| #62 — Every milestone selects its own artwork | Supported goals: 10, 50, 100, 250, 500, 1,000–9,000, and 10,000 hours | `flutter test test/activity_landmark_test.dart` | Each milestone renders the matching dedicated image and semantic label | PASS — all 15 milestone cases passed in the full suite |
+| #62 — Activities chooses the next goal from lifetime practice | Activity with 27h 30m total practice | `flutter test test/home_practice_flow_test.dart` | Activities shows the dedicated 50-hour landmark, selected from the next goal | PASS — Activities selected the 50-hour landmark |
+| #62 — Artwork stays attached to its island anchor at both sizes | Populated Activities with milestones at different progress levels | Run `flutter test test/home_practice_flow_test.dart`; inspect compact (320 × 568) and ordinary (390 × 844) layouts | Each landmark sits at the trail endpoint over the shared background, with no duplicate background, detached shadow, clipping, or unreadable inscription | NOT RUN |
+| #62 — Regression coverage | Current task branch | `flutter test --reporter expanded` | All automated tests pass | PASS — 94 tests passed |
+| #62 — Static analysis | Current task branch | `flutter analyze` | No issues found | NOT RUN |
+
 ## Activities panorama carousel
 
 Task: `#81` — Добавить карусель активностей с панорамным фоном.

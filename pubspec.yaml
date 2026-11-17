@@ -62,6 +62,19 @@ flutter:
     - lib/ui/graphics/activities_panorama.png
     - lib/ui/graphics/activity_question_mark_angled.png
     - lib/ui/graphics/island_background.png
+    - lib/ui/graphics/landmark_10_hours_angled.png
+    - lib/ui/graphics/landmark_50_hours_angled.png
+    - lib/ui/graphics/landmark_250_hours_angled.png
+    - lib/ui/graphics/landmark_500_hours_angled.png
+    - lib/ui/graphics/landmark_1000_hours_angled.png
+    - lib/ui/graphics/landmark_2000_hours_angled.png
+    - lib/ui/graphics/landmark_3000_hours_angled.png
+    - lib/ui/graphics/landmark_4000_hours_angled.png
+    - lib/ui/graphics/landmark_5000_hours_angled.png
+    - lib/ui/graphics/landmark_6000_hours_angled.png
+    - lib/ui/graphics/landmark_7000_hours_angled.png
+    - lib/ui/graphics/landmark_8000_hours_angled.png
+    - lib/ui/graphics/landmark_9000_hours_angled.png
     - lib/ui/graphics/landmark_10000_hours_angled.png
     - lib/ui/graphics/landmark_100_hours_angled.png
 

@@ -16,5 +16,8 @@ retained for comparison and rollback. It is not included in the runtime asset
 bundle; the app continues to display `activities_panorama.png`.
 
 `island_background.png` supplies the Welcome and empty Activities landscape.
-The `landmark_*_angled.png` files and `activity_question_mark_angled.png` are
-separate overlays rather than parts of the landscape artwork.
+The `landmark_*_hours_angled.png` files are separate transparent milestone
+overlays, one for each goal from 10 through 10,000 hours. The `ActivityLandmark`
+widget selects an overlay for the nearest goal; these images are not part of the
+landscape artwork. `activity_question_mark_angled.png` is also a separate
+overlay.

@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:tenk/app/app_theme.dart';
+import 'package:tenk/features/activities/domain/models/activity_goal_progress.dart';
 import 'package:tenk/features/activities/domain/models/first_activity.dart';
 import 'package:tenk/features/activities/presentation/activity_icon_catalog.dart';
 import 'package:tenk/features/timer/domain/controllers/daily_timer_controller.dart';
@@ -131,6 +132,7 @@ class _PopulatedActivitiesViewState extends State<PopulatedActivitiesView> {
                         : widget.selectedIndex.toDouble(),
                   ),
                   activities: widget.activities,
+                  timerController: widget.timerController,
                   finishBuilder: widget.activityFinishBuilder,
                 ),
               ),
@@ -402,11 +404,13 @@ class _PanoramaBackdrop extends StatelessWidget {
   const _PanoramaBackdrop({
     required this.layout,
     required this.activities,
+    required this.timerController,
     required this.finishBuilder,
   });
 
   final ActivityPanoramaLayout layout;
   final List<FirstActivity> activities;
+  final DailyTimerController timerController;
   final ActivityFinishBuilder? finishBuilder;
 
   @override
@@ -439,9 +443,20 @@ class _PanoramaBackdrop extends StatelessWidget {
                 excluding: index != layout.page.round(),
                 child: KeyedSubtree(
                   key: ValueKey('activities_finish_anchor_$index'),
-                  child:
-                      finishBuilder?.call(context, activities[index]) ??
-                      const ActivityLandmark(hours: 100),
+                  child: AnimatedBuilder(
+                    animation: timerController,
+                    builder: (context, _) {
+                      final activity = activities[index];
+                      final goalHours = ActivityGoalProgress.calculate(
+                        totalMinutes:
+                            activity.initialMinutes +
+                            timerController.totalFor(activity.id).inMinutes,
+                        recentMinutes: 0,
+                      ).goalHours;
+                      return finishBuilder?.call(context, activity) ??
+                          ActivityLandmark(hours: goalHours);
+                    },
+                  ),
                 ),
               ),
             ),

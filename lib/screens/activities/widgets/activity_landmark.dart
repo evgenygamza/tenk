@@ -9,42 +9,35 @@ class ActivityLandmark extends StatelessWidget {
       'lib/ui/graphics/landmark_100_hours_angled.png';
   static const tenThousandHoursAsset =
       'lib/ui/graphics/landmark_10000_hours_angled.png';
+  static const assetByHours = <int, String>{
+    10: 'lib/ui/graphics/landmark_10_hours_angled.png',
+    50: 'lib/ui/graphics/landmark_50_hours_angled.png',
+    100: hundredHoursAsset,
+    250: 'lib/ui/graphics/landmark_250_hours_angled.png',
+    500: 'lib/ui/graphics/landmark_500_hours_angled.png',
+    1000: 'lib/ui/graphics/landmark_1000_hours_angled.png',
+    2000: 'lib/ui/graphics/landmark_2000_hours_angled.png',
+    3000: 'lib/ui/graphics/landmark_3000_hours_angled.png',
+    4000: 'lib/ui/graphics/landmark_4000_hours_angled.png',
+    5000: 'lib/ui/graphics/landmark_5000_hours_angled.png',
+    6000: 'lib/ui/graphics/landmark_6000_hours_angled.png',
+    7000: 'lib/ui/graphics/landmark_7000_hours_angled.png',
+    8000: 'lib/ui/graphics/landmark_8000_hours_angled.png',
+    9000: 'lib/ui/graphics/landmark_9000_hours_angled.png',
+    10000: tenThousandHoursAsset,
+  };
 
   final int hours;
 
   @override
   Widget build(BuildContext context) {
-    return switch (hours) {
-      100 => const _HundredHourLandmark(),
-      10000 => const _TenThousandHourLandmark(),
-      _ => throw UnsupportedError(
+    final asset = assetByHours[hours];
+    if (asset == null) {
+      throw UnsupportedError(
         'Add a dedicated landmark design for $hours hours.',
-      ),
-    };
-  }
-}
-
-class _HundredHourLandmark extends StatelessWidget {
-  const _HundredHourLandmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return _LandmarkImage(
-      hours: 100,
-      asset: ActivityLandmark.hundredHoursAsset,
-    );
-  }
-}
-
-class _TenThousandHourLandmark extends StatelessWidget {
-  const _TenThousandHourLandmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return _LandmarkImage(
-      hours: 10000,
-      asset: ActivityLandmark.tenThousandHoursAsset,
-    );
+      );
+    }
+    return _LandmarkImage(hours: hours, asset: asset);
   }
 }
 
@@ -60,33 +53,7 @@ class _LandmarkImage extends StatelessWidget {
       key: ActivityLandmark.landmarkKey,
       label: '$hours hours',
       image: true,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: FractionallySizedBox(
-              widthFactor: 0.72,
-              heightFactor: 0.035,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0x1F0B271B),
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x3D0B271B),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          ExcludeSemantics(child: Image.asset(asset, fit: BoxFit.contain)),
-        ],
-      ),
+      child: ExcludeSemantics(child: Image.asset(asset, fit: BoxFit.contain)),
     );
   }
 }

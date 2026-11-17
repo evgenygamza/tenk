@@ -373,7 +373,7 @@ void main() {
         find.text('Every hour brings you closer\nto mastery.'),
         findsNothing,
       );
-      expect(find.bySemanticsLabel('100 hours'), findsOneWidget);
+      expect(find.bySemanticsLabel('50 hours'), findsOneWidget);
       expect(find.byIcon(Icons.library_music), findsAtLeastNWidgets(1));
       expect(
         find.byKey(const ValueKey('activities_selector_item_0')),
